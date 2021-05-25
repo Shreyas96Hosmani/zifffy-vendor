@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "462971931361",
+    "project_id": "dabbawala-vendor",
+    "storage_bucket": "dabbawala-vendor.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:462971931361:android:b252279aefd3ecae1645a0",
+        "android_client_info": {
+          "package_name": "com.vendor.dabbawala"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "462971931361-mfh6gaprnh8rjemp4ek8hmr2a9ibl4cd.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.vendor.dabbawala",
+            "certificate_hash": "f3e62fead3c4ca0749bc2c26719967892a9099d8"
+          }
+        },
+        {
+          "client_id": "462971931361-055fj9ra233gv0b4u95utfnjoe0j1qke.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAH3nfWhv06jrjMAODcuLbllAXDznODEyM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "462971931361-055fj9ra233gv0b4u95utfnjoe0j1qke.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
