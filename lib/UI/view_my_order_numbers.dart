@@ -10,6 +10,7 @@ import 'dart:convert';
 
 var orderIds;
 var orderItemIds;
+var orderItemQtys;
 var orderStatuses;
 
 ProgressDialog prOrders2;
@@ -43,6 +44,17 @@ var myOrderNumbers;
 var myOrderNumbersDate;
 
 var myOrderAdOnNamess;
+
+var summaryItemNames;
+var summaryItemQtys;
+
+var summaryAdonNames;
+var summaryAdonQtys;
+
+var myOrderTotal;
+var deliveryFees;
+var taxFees;
+var packingCharge;
 
 class ViewMyOrderNumbers extends StatefulWidget {
   @override
@@ -82,6 +94,7 @@ class _ViewMyOrderNumbersState extends State<ViewMyOrderNumbers> {
           setState(() {
             orderIds = List.generate(responseArrayGetOrders['data'].length, (index) => responseArrayGetOrders['data'][index]['orderID'].toString());
             orderItemIds = List.generate(responseArrayGetOrders['data'].length, (index) => responseArrayGetOrders['data'][index]['orderItemid'].toString());
+            orderItemQtys = List.generate(responseArrayGetOrders['data'].length, (index) => responseArrayGetOrders['data'][index]['orderQnty'].toString());
             orderStatuses = List.generate(responseArrayGetOrders['data'].length, (index) => responseArrayGetOrders['data'][index]['orderStatus'].toString());
             orderNumbers = List.generate(responseArrayGetOrders['data'].length, (index) => responseArrayGetOrders['data'][index]['orderNumber'].toString());
             orderDateTime = List.generate(responseArrayGetOrders['data'].length, (index) => responseArrayGetOrders['data'][index]['orderDatetime'].toString());
@@ -123,6 +136,8 @@ class _ViewMyOrderNumbersState extends State<ViewMyOrderNumbers> {
           });
           print(orderIds);
           print(orderItemIds);
+          print("itemNames"+itemNames.toList().toString());
+          print("orderItemQtys" + orderItemQtys.toList().toString());
           print(orderStatuses);
           print(orderNumbers);
           print(orderDateTime);
@@ -185,9 +200,21 @@ class _ViewMyOrderNumbersState extends State<ViewMyOrderNumbers> {
             myOrderNumberIds = List.generate(responseArrayGetOrderNumbers['data'].length, (index) => responseArrayGetOrderNumbers['data'][index]['orderID'].toString());
             myOrderNumbers = List.generate(responseArrayGetOrderNumbers['data'].length, (index) => responseArrayGetOrderNumbers['data'][index]['orderNumber'].toString());
             myOrderNumbersDate = List.generate(responseArrayGetOrderNumbers['data'].length, (index) => responseArrayGetOrderNumbers['data'][index]['orderDatetime'].toString());
+
+            deliveryFees = responseArrayGetOrderNumbers['data'][0]['orderDeliveryfee'].toString();
+            taxFees = responseArrayGetOrderNumbers['data'][0]['orderTax'].toString();
+            packingCharge = responseArrayGetOrderNumbers['data'][0]['orderPacking'].toString();
+
+            //myOrderTotal = responseArrayGetOrderNumbers['totalamt'].toString();
+
           });
           print(myOrderNumbers);
           print(myOrderNumbersDate);
+
+          print("deliveryFees"+deliveryFees.toString());
+          print("taxFees"+taxFees.toString());
+          print("packingCharge"+packingCharge.toString());
+          //print("myOrderTotal"+myOrderTotal);
 
         }else{
 
@@ -204,7 +231,7 @@ class _ViewMyOrderNumbersState extends State<ViewMyOrderNumbers> {
 
     ordersMapA = Map();
 
-    String url = "https://admin.dabbawala.ml/mobileapi/vendor/getadsonordersbyvendorid.php";
+    String url = "https://test.dabbawala.ml/mobileapi/vendor/getadsonordersbyvendorid.php";
 
     http.post(url, body: {
 
@@ -255,10 +282,60 @@ class _ViewMyOrderNumbersState extends State<ViewMyOrderNumbers> {
     });
   }
 
+  Future<String> getOrderSummary(context) async {
+
+    print("order summary api called");
+
+    String url = globals.apiUrl + "ordersummary.php";
+
+    http.post(url, body: {
+
+      "vendorID": login.storedUserId.toString(),
+
+    }).then((http.Response response) async {
+      final int statusCode = response.statusCode;
+
+      if (statusCode < 200 || statusCode > 400 || json == null) {
+        throw new Exception("Error fetching data");
+
+      }
+
+      var responseArrayGetOrdersSummary = jsonDecode(response.body);
+      print(responseArrayGetOrdersSummary);
+
+      var responseArrayGetOrdersSummaryMsg = responseArrayGetOrdersSummary['message'].toString();
+      print(responseArrayGetOrdersSummaryMsg);
+
+      if(statusCode == 200){
+        if(responseArrayGetOrdersSummaryMsg == "Successfully"){
+
+          setState(() {
+            summaryItemNames = List.generate(responseArrayGetOrdersSummary['data'].length, (index) => responseArrayGetOrdersSummary['data'][index]['itemName'].toString());
+            summaryItemQtys = List.generate(responseArrayGetOrdersSummary['data'].length, (index) => responseArrayGetOrdersSummary['data'][index]['neworderqnty'].toString());
+
+          });
+
+          print("***************");
+          print(summaryItemNames);
+          print(summaryItemQtys);
+          print("***************");
+
+        }else{
+
+          setState(() {
+            summaryItemNames = null;
+          });
+
+        }
+      }
+    });
+  }
+
   @override
   void initState() {
     // TODO: implement initState
     super.initState();
+    getOrderSummary(context);
     myOrderAdOnNamess = null;
     orderNumbers = null;
     totalOrdersTillDate = null;
@@ -320,7 +397,7 @@ class _ViewMyOrderNumbersState extends State<ViewMyOrderNumbers> {
                                 crossAxisAlignment: CrossAxisAlignment.center,
                                 children: [
                                   Flexible(
-                                    child: Text("$key",
+                                    child: Text(summaryItemNames[index].toString(),
                                       maxLines: 1,overflow: TextOverflow.ellipsis,
                                       textScaleFactor: 1,
                                       style: TextStyle(fontSize: 12),
@@ -328,7 +405,7 @@ class _ViewMyOrderNumbersState extends State<ViewMyOrderNumbers> {
                                   ),
                                   Padding(
                                     padding: const EdgeInsets.only(left: 5),
-                                    child: Text("${ordersMap[key]}",textScaleFactor: 1,),
+                                    child: Text(summaryItemQtys[index].toString(),textScaleFactor: 1,),
                                   )
                                 ],
                               ),
@@ -436,7 +513,7 @@ class _ViewMyOrderNumbersState extends State<ViewMyOrderNumbers> {
                 Navigator.push(
                     context,
                     PageRouteBuilder(
-                      pageBuilder: (c, a1, a2) =>ViewMyOrderDetails(myOrderNumbers[index]),
+                      pageBuilder: (c, a1, a2) =>ViewMyOrderDetails(myOrderNumbers[index], deliveryFees, packingCharge, taxFees),
                       transitionsBuilder: (c, anim, a2, child) => FadeTransition(opacity: anim, child: child),
                       transitionDuration: Duration(milliseconds: 300),
                     )

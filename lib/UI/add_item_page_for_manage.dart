@@ -45,7 +45,13 @@ bool changeAmountQty = false;
 
 var selectedCusinineName;
 
+List<int> itemTypesss = [];
+
 List<int> selectedItemsTypes = [];
+
+int itemTypeLength;
+var prevTypeList;
+var newTypeList;
 
 class AddItemPageForManage extends StatefulWidget {
   final id;
@@ -86,7 +92,7 @@ class _AddItemPageForManageState extends State<AddItemPageForManage> {
       "vendorID": login.storedUserId.toString(),
       "itemname" : add.addNewItemNameController.text.toString(),
       "cuisineID": selectedCuisineId.toString(),
-      "itemtype": selectedItemType.toString(),//selectedItemsTypes.toList().toString(),//selectedItemType.toString(),
+      "itemtype": selectedItemType.toString(),//selectedItemsTypes.toList().toString(),//selectedItemType.toString(), [Breakfast, Snacks]
       "itemcategory":add.itemCategory.toString(),
       "itemamount": add.addNewItemAmountNumController.text.toString() + add.itemQuantity.toString(),
       "itemprice": add.addNewItemPriceController.text.toString(),
@@ -254,6 +260,54 @@ class _AddItemPageForManageState extends State<AddItemPageForManage> {
     });
   }
 
+  Future<String> getItemIdsByMasterId(context) async {
+
+    String url = globals.apiUrl + "getitemsbymasterid.php";
+
+    http.post(url, body: {
+
+      "masterID" : widget.id,
+
+    }).then((http.Response response) async {
+      final int statusCode = response.statusCode;
+
+      if (statusCode < 200 || statusCode > 400 || json == null) {
+        throw new Exception("Error fetching data");
+
+      }
+      var responseArrayGetItemsByMasterId = jsonDecode(response.body);
+      print(responseArrayGetItemsByMasterId);
+
+      var responseArrayGetItemsMsgByMasterId = responseArrayGetItemsByMasterId['message'].toString();
+      print(responseArrayGetItemsMsgByMasterId);
+
+      if(statusCode == 200){
+        if(responseArrayGetItemsMsgByMasterId == "Item Found"){
+          //prGetItems.hide();
+          setState(() {
+
+            itemTypesss = List.generate(responseArrayGetItemsByMasterId['data'].length, (index) => responseArrayGetItemsByMasterId['data'][index]['itemType'] == "Breakfast" ? 0 : responseArrayGetItemsByMasterId['data'][index]['itemType'] == "Lunch" ? 1 : responseArrayGetItemsByMasterId['data'][index]['itemType'] == "Snacks" ? 2 : 3);
+            prevTypeList = itemTypesss;
+
+            itemTypeLength = itemTypesss.length;
+
+          });
+          print(itemTypesss);
+          print(prevTypeList);
+          print("itemTypeLength : "+itemTypeLength.toString());
+
+        }else{
+          //prGetItems.hide();
+          setState(() {
+            itemTypesss = null;
+          });
+
+        }
+      }
+    });
+
+  }
+
   int _value = 1;
 
   void _openEndDrawer() {
@@ -267,9 +321,12 @@ class _AddItemPageForManageState extends State<AddItemPageForManage> {
 
     print("widget.type ===== " + widget.type.toString());
 
+    getItemIdsByMasterId(context);
+
     getCuisines(context);
     setState(() {
 
+      itemTypesss = [];
       selectedCuisineId = null;
 
       changeCuisine = false;
@@ -398,7 +455,7 @@ class _AddItemPageForManageState extends State<AddItemPageForManage> {
                 SizedBox(
                   height: MediaQuery.of(context).size.height / 90,
                 ),
-                buildTypeField(context),
+                buildTypeField2(context),
                 SizedBox(
                   height: MediaQuery.of(context).size.height / 90,
                 ),
@@ -676,16 +733,49 @@ class _AddItemPageForManageState extends State<AddItemPageForManage> {
                     ),
                   );
                 }).toList(),
-                selectedItems: selectedItemsTypes,
+                selectedItems: itemTypesss,
                 hint: "Select Item Type",
                 searchHint: "",
                 doneButton: "Close",
                 closeButton: SizedBox.shrink(),
                 onChanged: (value) {
                   setState(() {
-                    selectedItemType = selectedItemsTypes.toList().toString();
-                    selectedItemsTypes = value;
+                    itemTypesss = itemTypesss.toList();
+                    itemTypesss = value;
                   });
+
+                  if(itemTypesss.length > itemTypeLength){
+
+                    //new item types added
+                    print("new item types added");   // [0,1]->[0,1,2] OR [0,1]->[0,1,2,3]   OR [0,1]->[1,2,3] OR [0,1]->[1,2,3]
+                    newTypeList = itemTypesss.where((element) => !prevTypeList.contains(element));
+
+                  }else if(itemTypesss.length < itemTypeLength){
+
+                    //itemTypes removed
+                    print("itemTypes removed");  // [0,1]->[0] OR [0,1]->[1]
+                    newTypeList = prevTypeList.where((element) => !itemTypesss.contains(element));
+
+                  }else{
+
+                    if(itemTypesss.length == itemTypeLength){
+
+                      if(prevTypeList == itemTypesss){
+
+                        //No Change
+                        print("Item Type Shifted"); // [0]->[1] OR [1]->[0] OR [0,1]->[2,3] [0,1]->[0,3] OR ANYTHING.....   [Breakfast, Lunch] -> [Breakfast, Snacks, Dinner]
+
+                      }else{
+
+                        //Item Type removed from one and inserted into anothet (i.e shifted from Breakfast/Lunch to Snacks/Dinner)
+                        print("No Change");// [0,1] -> [0,1]
+
+                      }
+
+                    }
+
+                  }
+
                 },
                 dialogBox: false,
                 isExpanded: true,
@@ -697,6 +787,9 @@ class _AddItemPageForManageState extends State<AddItemPageForManage> {
       ),
     );
   }
+
+
+  // [breakfast, lunch] -> [0, 1, 1, 0]
 
   Widget buildCategoryField2(BuildContext context) {
     return Padding(
