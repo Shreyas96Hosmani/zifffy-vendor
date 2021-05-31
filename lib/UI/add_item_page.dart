@@ -22,6 +22,7 @@ var selectedItemType;
 ProgressDialog prAddItem;
 
 var itemIdForpassing;
+var saveSelectedItemTypeBLSD;
 
 List<String> cuisineIds;
 List<String> cuisineNames;
@@ -30,6 +31,8 @@ var skuNo;
 
 List<int> selectedItems = [];
 List<int> selectedItemsTypes = [];
+
+var masterId;
 
 class AddItemPage extends StatefulWidget {
   @override
@@ -47,13 +50,12 @@ class _AddItemPageState extends State<AddItemPage> {
       "vendorID": login.storedUserId.toString(),
       "itemname" : add.addNewItemNameController.text.toString(),
       "cuisineID": selectedCuisineId.toString(),
-      "itemtype": selectedItemType.toString(),//selectedItemsTypes.toList().toString(),//selectedItemType.toString(),
+      "itemtype": saveSelectedItemTypeBLSD.toString(),//selectedItemsTypes.toList().toString(),//selectedItemType.toString(),
       "itemcategory":add.itemCategory.toString(),
       "itemamount": add.addNewItemAmountNumController.text.toString() + add.itemQuantity.toString(),
       "itemprice": add.addNewItemPriceController.text.toString(),
       "itemdescription": add.addNewItemDescriptionController.text.toString(),
-      "productimages[0]" : "null",
-
+      "masterID": masterId.toString(),
 
     }).then((http.Response response) async {
       final int statusCode = response.statusCode;
@@ -88,7 +90,7 @@ class _AddItemPageState extends State<AddItemPage> {
               Navigator.push(
                   context,
                   PageRouteBuilder(
-                    pageBuilder: (c, a1, a2) =>AddItemImages(itemIdForpassing),
+                    pageBuilder: (c, a1, a2) =>AddItemImages(masterId),
                     transitionsBuilder: (c, anim, a2, child) => FadeTransition(opacity: anim, child: child),
                     transitionDuration: Duration(milliseconds: 300),
                   )
@@ -111,7 +113,7 @@ class _AddItemPageState extends State<AddItemPage> {
 
   Future<String> getCuisines(context) async {
 
-    String url = "https://admin.dabbawala.ml/mobileapi/vendor/getallcuisine.php";
+    String url = "https://test.dabbawala.ml/mobileapi/vendor/getallcuisine.php";
 
     http.post(url, body: {
 
@@ -160,7 +162,11 @@ class _AddItemPageState extends State<AddItemPage> {
     // TODO: implement initState
     super.initState();
     setState(() {
+      saveSelectedItemTypeBLSD = null;
       selectedItems = [];
+      selectedItemsTypes = [0,1,2,3];
+      masterId = DateTime.now().microsecondsSinceEpoch.toString();
+      print("masterId : " + masterId.toString());
       skuNo = DateTime.now().microsecondsSinceEpoch.toString();
       selectedCuisineId = null;
       selectedItemType = null;
@@ -799,15 +805,52 @@ class _AddItemPageState extends State<AddItemPage> {
             child: GestureDetector(
               onTap: (){
                 if(add.addNewItemNameController.text.toString() == null || add.addNewItemNameController.text.toString() == "" || selectedCuisineId == null || selectedCuisineId == "null" ||
-                    selectedItemType == null || selectedItemType == "null" || add.itemCategory.toString() == null || add.itemCategory.toString() == "null" || add.itemQuantity == null || add.itemQuantity == "null" ||
+                    saveSelectedItemTypeBLSD == null || saveSelectedItemTypeBLSD == "null" || add.itemCategory.toString() == null || add.itemCategory.toString() == "null" || add.itemQuantity == null || add.itemQuantity == "null" ||
                     add.addNewItemAmountNumController.text.toString() == null || add.addNewItemAmountNumController.text.toString() == "" ||
                     add.addNewItemPriceController.text.toString() == null || add.addNewItemPriceController.text.toString() == "" ||
                     add.addNewItemDescriptionController.text.toString() == null || add.addNewItemDescriptionController.text.toString() == ""){
                   Fluttertoast.showToast(msg: "All fields are mandatory!", backgroundColor: Colors.black, textColor: Colors.white);
+
+                  selectedItemsTypes.forEach((element) {
+
+                    int idx = selectedItemsTypes.indexOf(element);
+
+                    if(selectedItemsTypes[idx].toString() == "0"){
+                      saveSelectedItemTypeBLSD = "Breakfast";
+                    }else if(selectedItemsTypes[idx].toString() == "1"){
+                      saveSelectedItemTypeBLSD = "Lunch";
+                    }else if(selectedItemsTypes[idx].toString() == "2"){
+                      saveSelectedItemTypeBLSD = "Snacks";
+                    }else{
+                      saveSelectedItemTypeBLSD = "Dinner";
+                    }
+
+                    print(saveSelectedItemTypeBLSD);
+
+                  });
+
                 }else{
                   print("else loop entered...");
                   prAddItem.show();
-                  addNewItem(context);
+                  selectedItemsTypes.forEach((element) {
+
+                    int idx = selectedItemsTypes.indexOf(element);
+
+                    if(selectedItemsTypes[idx].toString() == "0"){
+                      saveSelectedItemTypeBLSD = "Breakfast";
+                    }else if(selectedItemsTypes[idx].toString() == "1"){
+                      saveSelectedItemTypeBLSD = "Lunch";
+                    }else if(selectedItemsTypes[idx].toString() == "2"){
+                      saveSelectedItemTypeBLSD = "Snacks";
+                    }else{
+                      saveSelectedItemTypeBLSD = "Dinner";
+                    }
+
+                    print(saveSelectedItemTypeBLSD);
+
+                    addNewItem(context);
+
+                  });
                 }
               },
               child: Container(
@@ -856,9 +899,6 @@ class _AddItemPageState extends State<AddItemPage> {
       ),
     );
   }
-
-
-
 
   Widget buildNameField2(BuildContext context){
     return Padding(
@@ -959,47 +999,39 @@ class _AddItemPageState extends State<AddItemPage> {
           Container(
             child: Align(
               alignment: Alignment.center,
-              child: SearchableDropdown.single(
-                  items: ['Breakfast', 'Lunch', 'Snacks', 'Dinner'].map((String value) {
-                    return new DropdownMenuItem<String>(
-                      value: value,
-                      child: new Text(
-                        value,
-                        textScaleFactor: 1,
-                      ),
-                    );
-                  }).toList(),
-                  value: "Select category",
-                  hint: "Select category",
-                  searchHint: "Select category",
-                  closeButton: SizedBox.shrink(),
-                  onChanged: (value) {
-                    setState(() {
-                      add.itemType = value;
-                    });
-                    if(value == "Breakfast"){
-                      setState(() {
-                        selectedItemType = "Breakfast";
-                      });
-                      print(selectedItemType);
-                    }else if(value == "Lunch"){
-                      setState(() {
-                        selectedItemType = "Lunch";
-                      });
-                      print(selectedItemType);
-                    }else if(value == "Snacks"){
-                      setState(() {
-                        selectedItemType = "Snacks";
-                      });
-                      print(selectedItemType);
-                    }else if(value == "Dinner"){
-                      setState(() {
-                        selectedItemType = "Dinner";
-                      });
-                      print(selectedItemType);
-                    }
-                  },
-                  isExpanded: true
+              child: SearchableDropdown.multiple(
+                items: ['Breakfast', 'Lunch', 'Snacks', 'Dinner'].map((String value) {
+                  return new DropdownMenuItem<String>(
+                    value: value,
+                    child: new Text(
+                      value,
+                      textScaleFactor: 1,
+                    ),
+                  );
+                }).toList(),
+                selectedItems: selectedItemsTypes,
+                hint: "Select Item Type",
+                searchHint: "",
+                doneButton: "Close",
+                closeButton: SizedBox.shrink(),
+                onChanged: (value) {
+
+//                  setState(() {
+//                    selectedItemType = selectedItemsTypes.toList().toString();
+//                    selectedItemsTypes = value;
+//                  });
+//                  print(selectedItemsTypes.toList());
+//
+//                  setState(() {
+//                    if(value)
+//                  });
+
+                print(value);
+
+                },
+                dialogBox: false,
+                isExpanded: true,
+                menuConstraints: BoxConstraints.tight(Size.fromHeight(350)),
               ),
             ),
           ),

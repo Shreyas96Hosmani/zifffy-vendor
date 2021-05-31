@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:progress_dialog/progress_dialog.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:vendor_dabbawala/UI/order_summary_page.dart';
+import 'package:vendor_dabbawala/UI/view_my_order_numbers.dart';
 import 'data/login_data.dart' as login;
 import 'package:http/http.dart' as http;
 import 'package:vendor_dabbawala/UI/data/globals_data.dart' as globals;
@@ -13,7 +14,7 @@ ProgressDialog prOrders3;
 
 var myOrderIds;
 var myOrderItemNames;
-var myOrderItemPrices;
+List<String> myOrderItemPrices;
 var myOrderItemDescription;
 var myOrderCustomerContactNumbers;
 var myOrderTypes;
@@ -30,7 +31,7 @@ var myOrderQtyItems;
 var myOrderQtyAdDOns;
 
 var myOrderAdOnNames;
-var myOrderAdOnPrices;
+List<String> myOrderAdOnPrices;
 
 var myOrderAdditionalInfo;
 
@@ -52,18 +53,26 @@ List<String> orderDeliveryBoyStatusText = [];
 List<String> orderDeliveryBoyLat = [];
 List<String> orderDeliveryBoyLong = [];
 
+int sumItems;
+int sumAdons;
+
 class ViewMyOrderDetails extends StatefulWidget {
   final orderNumber;
-  ViewMyOrderDetails(this.orderNumber) : super();
+  final delivery;
+  final packing;
+  final tax;
+  ViewMyOrderDetails(this.orderNumber, this.delivery, this.packing, this.tax) : super();
   @override
   _ViewMyOrderDetailsState createState() => _ViewMyOrderDetailsState();
 }
 
 class _ViewMyOrderDetailsState extends State<ViewMyOrderDetails> {
 
+  int i;
+
   Future<String> getOrderDetails(context) async {
 
-    String url = "https://admin.dabbawala.ml/mobileapi/vendor/getorderitemsbyodernonvendorid.php";
+    String url = "https://test.dabbawala.ml/mobileapi/vendor/getorderitemsbyodernonvendorid.php";
 
     http.post(url, body: {
 
@@ -127,11 +136,15 @@ class _ViewMyOrderDetailsState extends State<ViewMyOrderDetails> {
 
           print(myOrderQtyItems);
 
+          getOrderAdons(context);
+
         }else{
 
           setState(() {
             myOrderItemNames = null;
           });
+
+          getOrderAdons(context);
 
         }
       }
@@ -140,7 +153,7 @@ class _ViewMyOrderDetailsState extends State<ViewMyOrderDetails> {
 
   Future<String> getOrderAdons(context) async {
 
-    String url = "https://admin.dabbawala.ml/mobileapi/vendor/getorderadsonbyodernonvendorid.php";
+    String url = "https://test.dabbawala.ml/mobileapi/vendor/getorderadsonbyodernonvendorid.php";
 
     http.post(url, body: {
 
@@ -176,11 +189,40 @@ class _ViewMyOrderDetailsState extends State<ViewMyOrderDetails> {
 
           print(myOrderQtyAdDOns);
 
+
+          for(i = 0; i < myOrderItemPrices.length; i++){
+            sumItems = myOrderItemPrices.map((value)=>int.parse(value)).reduce((x,y)=>x+y);
+          }
+
+          for(i = 0; i < myOrderAdOnPrices.length; i++){
+            sumAdons = myOrderAdOnPrices.map((value)=>int.parse(value)).reduce((x,y)=>x+y);
+          }
+
+          setState(() {
+            int temp = sumItems + sumAdons;
+
+            myOrderTotal = temp + int.parse(widget.delivery) + ( int.parse(widget.tax)*int.parse(myOrderItemPrices.length.toString()) )  + ( int.parse(widget.packing)*int.parse(myOrderItemPrices.length.toString()) );
+
+          });
+
+
         }else{
 
           setState(() {
             myOrderAdOnNames = null;
           });
+
+
+          for(i = 0; i < myOrderItemPrices.length; i++){
+            sumItems = myOrderItemPrices.map((value)=>int.parse(value)).reduce((x,y)=>x+y);
+          }
+
+          setState(() {
+            int temp  = sumItems;
+
+            myOrderTotal = myOrderTotal = temp + double.parse(widget.delivery) + ( (double.parse(widget.tax)/100)*double.parse(myOrderItemPrices.length.toString()) )  + ( double.parse(widget.packing)*double.parse(myOrderItemPrices.length.toString()) );
+
+          }); //1500+5+18+20
 
         }
       }
@@ -281,7 +323,7 @@ class _ViewMyOrderDetailsState extends State<ViewMyOrderDetails> {
 
   Future<String> getChotaBetaOrderIds(context) async {
 
-    String url = "https://admin.dabbawala.ml/mobileapi/user/getchotabetaorder.php";
+    String url = "https://test.dabbawala.ml/mobileapi/user/getchotabetaorder.php";
 
     http.post(url, body: {
 
@@ -386,6 +428,7 @@ class _ViewMyOrderDetailsState extends State<ViewMyOrderDetails> {
     // TODO: implement initState
     super.initState();
     setState(() {
+      myOrderTotal = null;
       myOrderItemNames = null;
       myOrderAdOnNames = null;
       orderIdsListChotaBeta = [];
@@ -409,12 +452,11 @@ class _ViewMyOrderDetailsState extends State<ViewMyOrderDetails> {
     });
     getChotaBetaOrderIds(context);
     getOrderDetails(context);
-    getOrderAdons(context);
   }
   
   @override
   Widget build(BuildContext context) {
-    getOrderDetails(context);
+    //getOrderDetails(context);
     prOrders3 = ProgressDialog(context);
     return Scaffold(
       backgroundColor: Colors.white,
@@ -638,6 +680,32 @@ class _ViewMyOrderDetailsState extends State<ViewMyOrderDetails> {
               ),
               SizedBox(height: 5,),
               Divider(color: Colors.black,),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Flexible(
+                    child: Text("Total Amount (Order + Delivery + Tax + Packing Charges)",
+                      style: GoogleFonts.nunitoSans(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        //color: Colors.green,fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                  Flexible(
+                    child: Text(myOrderTotal == null || myOrderTotal == "null" ? "loading" : "Rs. "+myOrderTotal.toString(),
+                      style: GoogleFonts.nunitoSans(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        //color: Colors.red,fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              SizedBox(height: 5,),
+              Divider(color: Colors.black,),
               SizedBox(height: 10,),
               buildItemNamesBuilder(context),
               SizedBox(height: 10,),
@@ -819,7 +887,7 @@ class _ViewMyOrderDetailsState extends State<ViewMyOrderDetails> {
                           ),
                         ),
                         SizedBox(height: 5,),
-                        Text("Total Price - Rs. - "+myOrderItemPrices[index],
+                        Text("Total Price - Rs. - "+ (int.parse(myOrderItemPrices[index]) * int.parse(myOrderQtyItems[index])).toString(),
                           style: GoogleFonts.nunitoSans(
                             fontSize: 13,
                           ),

@@ -5,7 +5,13 @@ import 'package:http/http.dart' as http;
 import 'package:vendor_dabbawala/UI/data/globals_data.dart' as globals;
 import 'dart:convert';
 import 'package:vendor_dabbawala/UI/data/login_data.dart' as login;
+import 'package:vendor_dabbawala/UI/data/manage_menu_data.dart';
 import 'package:vendor_dabbawala/UI/manage_menu_page.dart';
+
+var selectedItemMasterId;
+
+var itemIdssss;
+var itemTypesss;
 
 class VendorItemsList extends StatefulWidget {
   @override
@@ -39,7 +45,7 @@ class _VendorItemsListState extends State<VendorItemsList> {
         if(responseArrayGetItemsMsg == "Item Found"){
           //prGetItems.hide();
           setState(() {
-            itemId = List.generate(responseArrayGetItems['data'].length, (index) => responseArrayGetItems['data'][index]['itemID']);
+            itemId = List.generate(responseArrayGetItems['data'].length, (index) => responseArrayGetItems['data'][index]['itemMasterid']);
             itemName = List.generate(responseArrayGetItems['data'].length, (index) => responseArrayGetItems['data'][index]['itemName']);
             itemNameWithId = List.generate(responseArrayGetItems['data'].length, (index) => responseArrayGetItems['data'][index]['itemID']+responseArrayGetItems['data'][index]['itemName']);
             itemPrice = List.generate(responseArrayGetItems['data'].length, (index) => responseArrayGetItems['data'][index]['itemPrice']);
@@ -77,10 +83,61 @@ class _VendorItemsListState extends State<VendorItemsList> {
 
   }
 
+  Future<String> getItemIdsByMasterId(context) async {
+
+    String url = globals.apiUrl + "getitemsbymasterid.php";
+
+    http.post(url, body: {
+
+      "masterID" : selectedItemMasterId,
+
+    }).then((http.Response response) async {
+      final int statusCode = response.statusCode;
+
+      if (statusCode < 200 || statusCode > 400 || json == null) {
+        throw new Exception("Error fetching data");
+
+      }
+      var responseArrayGetItemsByMasterId = jsonDecode(response.body);
+      print(responseArrayGetItemsByMasterId);
+
+      var responseArrayGetItemsMsgByMasterId = responseArrayGetItemsByMasterId['message'].toString();
+      print(responseArrayGetItemsMsgByMasterId);
+
+      if(statusCode == 200){
+        if(responseArrayGetItemsMsgByMasterId == "Item Found"){
+          //prGetItems.hide();
+          setState(() {
+            itemIdssss = List.generate(responseArrayGetItemsByMasterId['data'].length, (index) => responseArrayGetItemsByMasterId['data'][index]['itemID']);
+            itemTypesss = List.generate(responseArrayGetItemsByMasterId['data'].length, (index) => responseArrayGetItemsByMasterId['data'][index]['itemType']);
+          });
+          print(itemIdssss);
+          print(itemTypesss);
+
+        }else{
+          //prGetItems.hide();
+          setState(() {
+            itemIdssss = null;
+          });
+
+        }
+      }
+    });
+
+  }
+
   @override
   void initState() {
     // TODO: implement initState
     super.initState();
+    selectedItemMasterId = null;
+    selectedItemIdForEditingToPass = null;
+    reportList = [
+      "Breakfast",
+      "Lunch",
+      "Snacks",
+      "Dinner",
+    ];
     setState(() {
       itemName = "1";
     });
@@ -239,7 +296,7 @@ class _VendorItemsListState extends State<VendorItemsList> {
         shrinkWrap: true,
         scrollDirection: Axis.vertical,
         itemCount: itemName == null ? 0 : itemName.length,
-        itemBuilder: (context, index) =>
+        itemBuilder: (context, index) => index>0 && (itemName.reversed.toList()[index].toString() == itemName.reversed.toList()[index-1].toString()) ? Container() :
             Padding(
               padding: const EdgeInsets.only(top:5, bottom: 10),
               child: Stack(
@@ -309,7 +366,7 @@ class _VendorItemsListState extends State<VendorItemsList> {
                     ),),
                   ),
                   Padding(
-                    padding: const EdgeInsets.only(left: 290,top: 50),
+                    padding: const EdgeInsets.only(left: 280,top: 60),
                     child: Text('Type - '+itemType.reversed.toList()[index],textScaleFactor: 1,style: GoogleFonts.nunitoSans(
                         color: Colors.black,
                         fontWeight: FontWeight.w600,
@@ -320,6 +377,12 @@ class _VendorItemsListState extends State<VendorItemsList> {
                     padding: const EdgeInsets.only(top: 140),
                     child: GestureDetector(
                       onTap: (){
+                        setState(() {
+                          selectedItemMasterId = itemId.reversed.toList()[index].toString();
+                        });
+                        print(selectedItemMasterId);
+//                        getItemIdsByMasterId(context);
+//                        _showReportDialog();
                         Navigator.push(
                             context,
                             PageRouteBuilder(
@@ -359,4 +422,100 @@ class _VendorItemsListState extends State<VendorItemsList> {
     );
   }
 
+  _showReportDialog() {
+    showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          //Here we will build the content of the dialog
+          return AlertDialog(
+            title: Text("Choose Item Type"),
+            content: MultiSelectChip(
+              reportList,
+              onSelectionChanged: (selectedList) {
+                setState(() {
+                  selectedReportList = selectedList;
+                });
+              },
+            ),
+            actions: <Widget>[
+              FlatButton(
+                child: Text("Continue"),
+                onPressed: (){Navigator.of(context).pop();
+                Navigator.push(
+                    context,
+                    PageRouteBuilder(
+                      pageBuilder: (c, a1, a2) =>ManageMenuPage(selectedItemIdForEditingToPass,itemName.reversed.toList()[index],itemCuisine.reversed.toList()[index],itemAmount.reversed.toList()[index],itemPrice.reversed.toList()[index],itemDescription.reversed.toList()[index],itemType.reversed.toList()[index],itemStatuses.reversed.toList()[index],itemCategory.reversed.toList()[index],itemBLSD.reversed.toList()[index]),
+                      transitionsBuilder: (c, anim, a2, child) => FadeTransition(opacity: anim, child: child),
+                      transitionDuration: Duration(milliseconds: 300),
+                    )
+                ).whenComplete((){
+                  getItemList(context);
+                });
+                },
+              )
+            ],
+          );
+        });
+  }
+
 }
+
+class MultiSelectChip extends StatefulWidget {
+  final List<String> reportList;
+  final Function(List<String>) onSelectionChanged; // +added
+  MultiSelectChip(
+      this.reportList,
+      {this.onSelectionChanged} // +added
+      );
+  @override
+  _MultiSelectChipState createState() => _MultiSelectChipState();
+}
+class _MultiSelectChipState extends State<MultiSelectChip> {
+  // String selectedChoice = "";
+  List<String> selectedChoices = List();
+  _buildChoiceList() {
+    List<Widget> choices = List();
+    itemTypesss.forEach((item) {
+      choices.add(Container(
+        padding: const EdgeInsets.all(2.0),
+        child: ChoiceChip(
+          label: Text(item),
+          selected: selectedChoices.contains(item),
+          onSelected: (selected) {
+            setState(() {
+
+              int idx = itemTypesss.indexOf(item);
+
+              selectedItemIdForEditingToPass = itemIdssss[idx];
+
+              selectedChoices.contains(item)
+                  ? selectedChoices.remove(item)
+                  : selectedChoices.add(item);
+              widget.onSelectionChanged(selectedChoices); // +added
+            });
+
+            print(selectedItemIdForEditingToPass);
+
+          },
+        ),
+      ));
+    });
+    return choices;
+  }
+  @override
+  Widget build(BuildContext context) {
+    return Wrap(
+      children: _buildChoiceList(),
+    );
+  }
+}
+
+List<String> reportList = [
+  "Breakfast",
+  "Lunch",
+  "Snacks",
+  "Dinner",
+];
+List<String> selectedReportList = List();
+
+var selectedItemIdForEditingToPass;

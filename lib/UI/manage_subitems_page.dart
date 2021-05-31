@@ -37,7 +37,7 @@ class _ManageSubItemsState extends State<ManageSubItems> {
 
   Future<String> getSubItemList(context) async {
 
-    String url = "https://admin.dabbawala.ml/mobileapi/user/getsubitembyitemid.php";
+    String url = "https://test.dabbawala.ml/mobileapi/user/getsubitembyitemid.php";
 
     http.post(url, body: {
 
@@ -84,7 +84,7 @@ class _ManageSubItemsState extends State<ManageSubItems> {
 
   Future<String> addSubItem(context) async {
 
-    String url = "https://admin.dabbawala.ml/mobileapi/vendor/addsubitem.php";
+    String url = "https://test.dabbawala.ml/mobileapi/vendor/addsubitem.php";
 
     http.post(url, body: {
 
@@ -132,7 +132,7 @@ class _ManageSubItemsState extends State<ManageSubItems> {
 
   Future<String> removeSubItem(context) async {
 
-    String url = "https://admin.dabbawala.ml/mobileapi/vendor/deletesubitems.php";
+    String url = "https://test.dabbawala.ml/mobileapi/vendor/deletesubitems.php";
 
     http.post(url, body: {
 
