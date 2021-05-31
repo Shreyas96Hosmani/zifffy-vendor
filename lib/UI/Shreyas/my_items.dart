@@ -10,7 +10,6 @@ class MyItems extends StatefulWidget {
 }
 
 class _MyItemsState extends State<MyItems> {
-
   @override
   void initState() {
     // TODO: implement initState
@@ -27,22 +26,24 @@ class _MyItemsState extends State<MyItems> {
     );
   }
 
-  Widget buildAddNewItemContainer(BuildContext context){
+  Widget buildAddNewItemContainer(BuildContext context) {
     return Container(
-      height: MediaQuery.of(context).size.height/18,
+      height: MediaQuery.of(context).size.height / 18,
       child: RaisedButton(
-        onPressed: (){
+        onPressed: () {
           Navigator.pushReplacement(
               context,
               PageRouteBuilder(
-                pageBuilder: (c, a1, a2) =>AddItemPage(),
-                transitionsBuilder: (c, anim, a2, child) => FadeTransition(opacity: anim, child: child),
+                pageBuilder: (c, a1, a2) => AddItemPage(),
+                transitionsBuilder: (c, anim, a2, child) =>
+                    FadeTransition(opacity: anim, child: child),
                 transitionDuration: Duration(milliseconds: 300),
-              )
-          );
+              ));
         },
         child: Center(
-          child: Text('Add New Item',textScaleFactor: 1,
+          child: Text(
+            'Add New Item',
+            textScaleFactor: 1,
             style: GoogleFonts.nunitoSans(
               color: Colors.white,
               fontSize: 18,
@@ -54,5 +55,4 @@ class _MyItemsState extends State<MyItems> {
       ),
     );
   }
-
 }
