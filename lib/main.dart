@@ -2,6 +2,7 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:vendor_dabbawala/UI/Shreyas/my_items.dart';
 import 'package:vendor_dabbawala/UI/options_page.dart';
 import 'package:vendor_dabbawala/UI/view_my_order_numbers.dart';
 import 'UI/login_page.dart';
@@ -28,15 +29,22 @@ void main() {
   initFCM();
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
+  @override
+  _MyAppState createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
   @override
   Widget build(context) {
     return MaterialApp(
         debugShowCheckedModeBanner: false,
         title: 'Flutter Demo',
+        routes: <String, WidgetBuilder>{
+          '/myItems': (context) => MyItems(),
+        },
         theme: ThemeData(
           primarySwatch: Colors.blue,
-
         ),
         home: LoginPage(),
     );
@@ -65,19 +73,21 @@ initFCM() async {
 
       showOnMessageNotification(message);
       print("onMessage.....: $message");
-      fcmMessageHandler(message, context);
+      //fcmMessageHandler(message, context);
 
     },
     onLaunch: (Map<String, dynamic> message) async {
 
       print("onLaunch: $message");
-      fcmMessageHandler(message, context);
+      showOnMessageNotification(message);
+      //fcmMessageHandler(message, context);
 
     },
     onResume: (Map<String, dynamic> message) async {
 
       print("onResume: $message");
-      fcmMessageHandler(message, context);
+      showOnMessageNotification(message);
+      //fcmMessageHandler(message, context);
 
     },
   );
@@ -106,28 +116,6 @@ Future showOnMessageNotification(var message) async {
       1, message['notification']['title'].toString(), message['notification']['body'].toString(), platform,
       payload: '');
 
-
-  if(message['notification']['body'].toString() == "You have received a new order. Tap to know the details."){
-    Navigator.push(
-        context,
-        PageRouteBuilder(
-          pageBuilder: (c, a1, a2) => ViewMyOrderNumbers(),
-          transitionsBuilder: (c, anim, a2, child) =>
-              FadeTransition(opacity: anim, child: child),
-          transitionDuration: Duration(milliseconds: 300),
-        )
-    );
-  }else{
-    Navigator.push(
-        context,
-        PageRouteBuilder(
-          pageBuilder: (c, a1, a2) => ViewMyOrderNumbers(),
-          transitionsBuilder: (c, anim, a2, child) =>
-              FadeTransition(opacity: anim, child: child),
-          transitionDuration: Duration(milliseconds: 300),
-        )
-    );
-  }
 
 }
 

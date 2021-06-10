@@ -13,6 +13,8 @@ var selectedItemMasterId;
 var itemIdssss;
 var itemTypesss;
 
+var itemTypes4;
+
 class VendorItemsList extends StatefulWidget {
   @override
   _VendorItemsListState createState() => _VendorItemsListState();
@@ -56,7 +58,10 @@ class _VendorItemsListState extends State<VendorItemsList> {
             itemAmount = List.generate(responseArrayGetItems['data'].length, (index) => responseArrayGetItems['data'][index]['itemAmount']);
             itemStatuses = List.generate(responseArrayGetItems['data'].length, (index) => responseArrayGetItems['data'][index]['itemStatus'].toString());
             itemCategory = List.generate(responseArrayGetItems['data'].length, (index) => responseArrayGetItems['data'][index]['itemCategory'].toString());
-            itemBLSD = List.generate(responseArrayGetItems['data'].length, (index) => responseArrayGetItems['data'][index]['itemType'].toString());
+            itemBLSD = List.generate(responseArrayGetItems['data'].length, (index) => responseArrayGetItems['data'][index]['itemMasterid']+responseArrayGetItems['data'][index]['itemType'].toString());
+
+            //typeList = List.generate(itemBLSD.length, (index) => itemBLSD[index].toString().substring(itemBLSD[index].indexOf(";")));
+
           });
           print(itemId);
           print(itemName);
@@ -69,55 +74,18 @@ class _VendorItemsListState extends State<VendorItemsList> {
           print(itemAmount);
           print(itemStatuses);
           print(itemCategory);
+          print("*******");
           print(itemBLSD);
+          print("*******");
+
+//          print("000000000");
+//          print(typeList.toList());
+//          print("000000000");
 
         }else{
           //prGetItems.hide();
           setState(() {
             itemName = null;
-          });
-
-        }
-      }
-    });
-
-  }
-
-  Future<String> getItemIdsByMasterId(context) async {
-
-    String url = globals.apiUrl + "getitemsbymasterid.php";
-
-    http.post(url, body: {
-
-      "masterID" : selectedItemMasterId,
-
-    }).then((http.Response response) async {
-      final int statusCode = response.statusCode;
-
-      if (statusCode < 200 || statusCode > 400 || json == null) {
-        throw new Exception("Error fetching data");
-
-      }
-      var responseArrayGetItemsByMasterId = jsonDecode(response.body);
-      print(responseArrayGetItemsByMasterId);
-
-      var responseArrayGetItemsMsgByMasterId = responseArrayGetItemsByMasterId['message'].toString();
-      print(responseArrayGetItemsMsgByMasterId);
-
-      if(statusCode == 200){
-        if(responseArrayGetItemsMsgByMasterId == "Item Found"){
-          //prGetItems.hide();
-          setState(() {
-            itemIdssss = List.generate(responseArrayGetItemsByMasterId['data'].length, (index) => responseArrayGetItemsByMasterId['data'][index]['itemID']);
-            itemTypesss = List.generate(responseArrayGetItemsByMasterId['data'].length, (index) => responseArrayGetItemsByMasterId['data'][index]['itemType']);
-          });
-          print(itemIdssss);
-          print(itemTypesss);
-
-        }else{
-          //prGetItems.hide();
-          setState(() {
-            itemIdssss = null;
           });
 
         }
@@ -145,7 +113,16 @@ class _VendorItemsListState extends State<VendorItemsList> {
   }
 
   @override
+  void dispose() {
+    // TODO: implement dispose
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    //Future.delayed(Duration(seconds: 3), (){
+      //getItemList(context);
+//    });
     return itemName == "1" ? Center(
       child: CircularProgressIndicator(),
     ) : itemName == null ? buildNoItemsContainer(context) : buildItemsContainer(context);
@@ -299,82 +276,143 @@ class _VendorItemsListState extends State<VendorItemsList> {
         itemBuilder: (context, index) => index>0 && (itemName.reversed.toList()[index].toString() == itemName.reversed.toList()[index-1].toString()) ? Container() :
             Padding(
               padding: const EdgeInsets.only(top:5, bottom: 10),
-              child: Stack(
-                children: [Container(
-                  padding: EdgeInsets.only(left: 10,right: 10),
-                  width: MediaQuery.of(context).size.width/1,
-                  height: MediaQuery.of(context).size.height/5,
-                ),
-                  Container(
-                    width: MediaQuery.of(context).size.width/4,
-                    height: MediaQuery.of(context).size.height/6.5,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.all(Radius.circular(15)),
+              child: Column(
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [Container(
+                      padding: EdgeInsets.only(left: 0,right: 0),
+                      //width: MediaQuery.of(context).size.width/1,
+                      //height: MediaQuery.of(context).size.height/5,
                     ),
-                    child: Image.network("https://admin.dabbawala.ml/"+image.reversed.toList()[index].toString(),scale: 2,fit: BoxFit.fill,),
+                      Container(
+                        width: MediaQuery.of(context).size.width/4,
+                        height: MediaQuery.of(context).size.height/6.5,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.all(Radius.circular(15)),
+                        ),
+                        child: Image.network("https://test.dabbawala.ml/"+image.reversed.toList()[index].toString(),scale: 2,fit: BoxFit.fill,),
+                      ),
+                      SizedBox(width: 10,),
+                      Column(
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Container(
+                            width: MediaQuery.of(context).size.width/1.7,
+                            child: Text(itemName.reversed.toList()[index],
+                              maxLines: 2,
+                              textScaleFactor: 1,style: GoogleFonts.nunitoSans(
+                                color: Colors.black,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 12
+                            ),),
+                          ),SizedBox(height: 10,),
+                          Container(
+                            width: MediaQuery.of(context).size.width/1.7,
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: [
+                                Text("Cuisine - "+itemCuisine.reversed.toList()[index],
+                                  maxLines: 2,
+                                  textScaleFactor: 1,style: GoogleFonts.nunitoSans(
+                                      color: Colors.black,
+                                      fontWeight: FontWeight.w600,
+                                      fontSize: 12
+                                  ),),
+                                Text("Category - "+itemType.reversed.toList()[index],
+                                  maxLines: 2,
+                                  textScaleFactor: 1,style: GoogleFonts.nunitoSans(
+                                      color: Colors.black,
+                                      fontWeight: FontWeight.w600,
+                                      fontSize: 12
+                                  ),),
+                              ],
+                            ),
+                          ),
+//                          Container(
+//                            width: MediaQuery.of(context).size.width/1.7,
+//                            child: Text("Cuisine - "+itemCuisine.reversed.toList()[index],
+//                              maxLines: 2,
+//                              textScaleFactor: 1,style: GoogleFonts.nunitoSans(
+//                                  color: Colors.black,
+//                                  fontWeight: FontWeight.bold,
+//                                  fontSize: 12
+//                              ),),
+//                          ),Container(
+//                            width: MediaQuery.of(context).size.width/1.7,
+//                            child: Text("Category - "+itemType.reversed.toList()[index],
+//                              maxLines: 2,
+//                              textScaleFactor: 1,style: GoogleFonts.nunitoSans(
+//                                  color: Colors.black,
+//                                  fontWeight: FontWeight.bold,
+//                                  fontSize: 12
+//                              ),),
+//                          ),
+                          SizedBox(height: 10,),
+//                          Container(
+//                            width: MediaQuery.of(context).size.width/1.7,
+//                            child: Text(
+//                              "Item Description : "+itemDescription.reversed.toList()[index],
+//                              textScaleFactor: 1,
+//                              overflow: TextOverflow.ellipsis,
+//                              maxLines: 2,
+//                              style: GoogleFonts.nunitoSans(
+//                                  color: Colors.black,
+//                                  fontSize: 12,
+//                                  fontWeight: FontWeight.w600
+//                              ),),
+//                          ),SizedBox(height: 0,),
+//                  Padding(
+//                    padding: const EdgeInsets.only(left: 115,top: 50),
+//                    child: Text(itemAmount.reversed.toList()[index],textScaleFactor: 1,style: GoogleFonts.nunitoSans(
+//                        color: Colors.black,
+//                        fontWeight: FontWeight.w600,
+//                        fontSize: 12
+//                    ),),
+//                  ),
+                          Text('Price - Rs '+itemPrice.reversed.toList()[index],textScaleFactor: 1,style: GoogleFonts.nunitoSans(
+                              color: Colors.black,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600
+                          ),),SizedBox(height: 10,),
+                          //Text(itemId.reversed.toList()[index].toString()),
+
+                          //itemBLSD.reversed.toList()[index].toString().contains(itemId.reversed.toList()[index].toString()) ?
+                          Container(
+                            width: 200,
+                            child: Text(itemBLSD.where((item) => item.contains(itemId.reversed.toList()[index])).toString().replaceAll(new RegExp(r'[0-9]'),''),textScaleFactor: 1,style: GoogleFonts.nunitoSans(
+                      color: Colors.black,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 12
+                  ),),
+                          ),
+                              //: Container(),
+//                  Padding(
+//                    padding: const EdgeInsets.only(left:280,top:10),
+//                    child: Text('SKU No - SKU-'+itemId.reversed.toList()[index],textScaleFactor: 1,style: GoogleFonts.nunitoSans(
+//                        color: Colors.black,
+//                        fontWeight: FontWeight.w600,
+//                        fontSize: 12
+//                    ),),
+//                  ),
+//                  Padding(
+//                    padding: const EdgeInsets.only(left: 280,top: 60),
+//                    child: Text('Type - '+itemType.reversed.toList()[index],textScaleFactor: 1,style: GoogleFonts.nunitoSans(
+//                        color: Colors.black,
+//                        fontWeight: FontWeight.w600,
+//                        fontSize: 12
+//                    ),),
+//                  ),
+
+                        ],
+                      ),
+                    ],
                   ),
                   Padding(
-                    padding: const EdgeInsets.only(left: 115,top: 10),
-                    child: Text(itemName.reversed.toList()[index],textScaleFactor: 1,style: GoogleFonts.nunitoSans(
-                        color: Colors.black,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 12
-                    ),),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.only(left: 115, top: 90),
-                    child: Text(itemDescription.reversed.toList()[index],
-                      textScaleFactor: 1,
-                      overflow: TextOverflow.ellipsis,
-                      maxLines: 2,
-                      style: GoogleFonts.nunitoSans(
-                          color: Colors.black,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600
-                      ),),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.only(left: 115,top: 50),
-                    child: Text(itemAmount.reversed.toList()[index],textScaleFactor: 1,style: GoogleFonts.nunitoSans(
-                        color: Colors.black,
-                        fontWeight: FontWeight.w600,
-                        fontSize: 12
-                    ),),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.only(left: 115,top: 70),
-                    child: Text('Price - Rs '+itemPrice.reversed.toList()[index],textScaleFactor: 1,style: GoogleFonts.nunitoSans(
-                        color: Colors.black,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600
-                    ),),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.only(left: 115,top: 30),
-                    child: Text(itemCuisine.reversed.toList()[index],textScaleFactor: 1,style: GoogleFonts.nunitoSans(
-                        color: Colors.black,
-                        fontWeight: FontWeight.w600,
-                        fontSize: 12
-                    ),),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.only(left:280,top:10),
-                    child: Text('SKU No - SKU-'+itemId.reversed.toList()[index],textScaleFactor: 1,style: GoogleFonts.nunitoSans(
-                        color: Colors.black,
-                        fontWeight: FontWeight.w600,
-                        fontSize: 12
-                    ),),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.only(left: 280,top: 60),
-                    child: Text('Type - '+itemType.reversed.toList()[index],textScaleFactor: 1,style: GoogleFonts.nunitoSans(
-                        color: Colors.black,
-                        fontWeight: FontWeight.w600,
-                        fontSize: 12
-                    ),),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.only(top: 140),
+                    padding: const EdgeInsets.only(top: 0),
                     child: GestureDetector(
                       onTap: (){
                         setState(() {
@@ -420,42 +458,6 @@ class _VendorItemsListState extends State<VendorItemsList> {
             )
 
     );
-  }
-
-  _showReportDialog() {
-    showDialog(
-        context: context,
-        builder: (BuildContext context) {
-          //Here we will build the content of the dialog
-          return AlertDialog(
-            title: Text("Choose Item Type"),
-            content: MultiSelectChip(
-              reportList,
-              onSelectionChanged: (selectedList) {
-                setState(() {
-                  selectedReportList = selectedList;
-                });
-              },
-            ),
-            actions: <Widget>[
-              FlatButton(
-                child: Text("Continue"),
-                onPressed: (){Navigator.of(context).pop();
-                Navigator.push(
-                    context,
-                    PageRouteBuilder(
-                      pageBuilder: (c, a1, a2) =>ManageMenuPage(selectedItemIdForEditingToPass,itemName.reversed.toList()[index],itemCuisine.reversed.toList()[index],itemAmount.reversed.toList()[index],itemPrice.reversed.toList()[index],itemDescription.reversed.toList()[index],itemType.reversed.toList()[index],itemStatuses.reversed.toList()[index],itemCategory.reversed.toList()[index],itemBLSD.reversed.toList()[index]),
-                      transitionsBuilder: (c, anim, a2, child) => FadeTransition(opacity: anim, child: child),
-                      transitionDuration: Duration(milliseconds: 300),
-                    )
-                ).whenComplete((){
-                  getItemList(context);
-                });
-                },
-              )
-            ],
-          );
-        });
   }
 
 }
@@ -519,3 +521,5 @@ List<String> reportList = [
 List<String> selectedReportList = List();
 
 var selectedItemIdForEditingToPass;
+
+var typeList;

@@ -12,7 +12,7 @@ var itemAmount;
 var itemType;
 var itemStatuses;
 var itemCategory;
-var itemBLSD;
+List<String> itemBLSD;
 
 var selectedItemIdForSearch;
 

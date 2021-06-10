@@ -15,8 +15,12 @@ import 'order_summary_page.dart';
 import 'package:vendor_dabbawala/UI/data/globals_data.dart' as globals;
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'data/login_data.dart' as login;
 
 ProgressDialog prLogOut;
+
+var ordNos;
+var ordTot;
 
 class OptionsPage extends StatefulWidget {
   @override
@@ -71,14 +75,86 @@ class _OptionsPageState extends State<OptionsPage> {
     });
   }
 
+  Future<String> getOrderNumbers(context) async {
+
+    String url = globals.apiUrl + "getordernumbersbyvendorid.php";
+
+    http.post(url, body: {
+
+      "vendorID": login.storedUserId.toString(),
+
+    }).then((http.Response response) async {
+      final int statusCode = response.statusCode;
+
+      if (statusCode < 200 || statusCode > 400 || json == null) {
+        throw new Exception("Error fetching data");
+
+      }
+
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      var responseArrayGetOrderNumbers = jsonDecode(response.body);
+      print(responseArrayGetOrderNumbers);
+
+      var responseArrayGetOrderNumbersMsg = responseArrayGetOrderNumbers['message'].toString();
+      print(responseArrayGetOrderNumbersMsg);
+
+      if(statusCode == 200){
+        if(responseArrayGetOrderNumbersMsg == "Item Found"){
+
+          setState(() {
+            ordNos = List.generate(responseArrayGetOrderNumbers['data'].length, (index) => responseArrayGetOrderNumbers['data'][index]['orderNumber'].toString());
+
+            ordTot = ordNos.length;
+            var tmpTot = prefs.getString('totalOrders');
+
+            print("NEWWW : ordTot"+ordTot.toString());
+            print("tmpTot"+tmpTot.toString());
+
+            if(int.parse(ordTot.toString()) > int.parse(tmpTot.toString())){
+              Fluttertoast.showToast(msg: 'You have received a new order!', backgroundColor: Colors.black, textColor: Colors.white,
+                gravity: ToastGravity.TOP,
+              );
+              Navigator.push(
+                  context,
+                  PageRouteBuilder(
+                    pageBuilder: (c, a1, a2) =>ViewMyOrderNumbers(),
+                    transitionsBuilder: (c, anim, a2, child) => FadeTransition(opacity: anim, child: child),
+                    transitionDuration: Duration(milliseconds: 300),
+                  )
+              );
+            }else{
+
+            }
+
+          });
+
+          print("*******");
+          print(ordNos);
+          print("*******");
+
+          print("deliveryFees"+deliveryFees.toString());
+
+        }else{
+
+          setState(() {
+            myOrderNumbers = null;
+          });
+
+        }
+      }
+    });
+  }
+
   @override
   void initState() {
     // TODO: implement initState
     super.initState();
+    getOrderNumbers(context);
   }
 
   @override
   Widget build(BuildContext context) {
+    //getOrderNumbers(context);
     prLogOut = ProgressDialog(context);
     return WillPopScope(
       onWillPop: ()=>
@@ -177,7 +253,9 @@ class _OptionsPageState extends State<OptionsPage> {
               transitionsBuilder: (c, anim, a2, child) => FadeTransition(opacity: anim, child: child),
               transitionDuration: Duration(milliseconds: 300),
             )
-        );
+        ).whenComplete((){
+          getOrderNumbers(context);
+        });
       },
       child: Container(
         width: MediaQuery.of(context).size.width/1.2,
@@ -211,7 +289,9 @@ class _OptionsPageState extends State<OptionsPage> {
               transitionsBuilder: (c, anim, a2, child) => FadeTransition(opacity: anim, child: child),
               transitionDuration: Duration(milliseconds: 300),
             )
-        );
+        ).whenComplete((){
+          getOrderNumbers(context);
+        });
 
       },
       child: Container(
@@ -246,7 +326,9 @@ class _OptionsPageState extends State<OptionsPage> {
               transitionsBuilder: (c, anim, a2, child) => FadeTransition(opacity: anim, child: child),
               transitionDuration: Duration(milliseconds: 300),
             )
-        );
+        ).whenComplete((){
+          getOrderNumbers(context);
+        });
       },
       child: Container(
         width: MediaQuery.of(context).size.width/1.2,

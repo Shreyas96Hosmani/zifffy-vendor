@@ -11,7 +11,7 @@ import 'package:vendor_dabbawala/UI/data/globals_data.dart' as globals;
 import 'dart:convert';
 
 ProgressDialog prOrders3;
-
+var ordersMap = Map();
 var myOrderIds;
 var myOrderItemNames;
 List<String> myOrderItemPrices;
@@ -29,6 +29,7 @@ var myOrderDeliveryAddressLong;
 
 var myOrderQtyItems;
 var myOrderQtyAdDOns;
+var myOrderAdsonItemType;
 
 var myOrderAdOnNames;
 List<String> myOrderAdOnPrices;
@@ -56,6 +57,15 @@ List<String> orderDeliveryBoyLong = [];
 int sumItems;
 int sumAdons;
 
+var tmpSum;
+var tmpSumA;
+
+var totalItems;
+var totalItemAdons;
+
+var customerAddress;
+var customerAddressSplitted;
+
 class ViewMyOrderDetails extends StatefulWidget {
   final orderNumber;
   final delivery;
@@ -71,6 +81,8 @@ class _ViewMyOrderDetailsState extends State<ViewMyOrderDetails> {
   int i;
 
   Future<String> getOrderDetails(context) async {
+
+    ordersMap = Map();
 
     String url = "https://test.dabbawala.ml/mobileapi/vendor/getorderitemsbyodernonvendorid.php";
 
@@ -114,8 +126,23 @@ class _ViewMyOrderDetailsState extends State<ViewMyOrderDetails> {
             myOrderItemDescription = List.generate(responseArrayGetOrderDetails['data'].length, (index) => responseArrayGetOrderDetails['data'][index]['itemDescription'].toString());
             orderStatus = List.generate(responseArrayGetOrderDetails['data'].length, (index) => responseArrayGetOrderDetails['data'][index]['orderStatus'].toString());
 
-            myOrderQtyItems = List.generate(responseArrayGetOrderDetails['data'].length, (index) => responseArrayGetOrderDetails['data'][index]['orderQnty'].toString());
+            customerAddress = List.generate(responseArrayGetOrderDetails['data'].length, (index) => responseArrayGetOrderDetails['data'][index]['customeraddressAddress'].toString());
+            List<int> idx = List.generate(customerAddress.length, (index) => customerAddress[index].indexOf("- Add"));
+            print(idx);
+            customerAddressSplitted = List.generate(customerAddress.length, (index) => customerAddress[index].toString().substring(0,idx[index]).trim());
 
+            myOrderQtyItems = List.generate(responseArrayGetOrderDetails['data'].length, (index) => responseArrayGetOrderDetails['data'][index]['orderQnty'].toString());
+            tmpSum = List.generate(responseArrayGetOrderDetails['data'].length, (index) => int.parse(responseArrayGetOrderDetails['data'][index]['orderQnty'].toString()) * int.parse(responseArrayGetOrderDetails['data'][index]['itemPrice'].toString()) );
+            totalItems = myOrderQtyItems.map((value)=>int.parse(value.toString())).reduce((x,y)=>x+y);
+
+            myOrderTypes.forEach((element) {
+              if(!ordersMap.containsKey(element)) {
+                ordersMap[element] = 1;
+              } else {
+                ordersMap[element] +=1;
+              }
+            });
+            
           });
           print(myOrderIds);
           print(myOrderItemNames);
@@ -135,6 +162,11 @@ class _ViewMyOrderDetailsState extends State<ViewMyOrderDetails> {
           print(orderStatus);
 
           print(myOrderQtyItems);
+
+          print("********");
+          print(customerAddress);
+          print(customerAddressSplitted);
+          print("********");
 
           getOrderAdons(context);
 
@@ -169,7 +201,10 @@ class _ViewMyOrderDetailsState extends State<ViewMyOrderDetails> {
       }
 
       var responseArrayGetOrderAdOns = jsonDecode(response.body);
+      print("00000000000000");
       print(responseArrayGetOrderAdOns);
+      print("00000000000000");
+
 
       var responseArrayGetOrderAdOnsMsg = responseArrayGetOrderAdOns['message'].toString();
       print(responseArrayGetOrderAdOnsMsg);
@@ -181,27 +216,54 @@ class _ViewMyOrderDetailsState extends State<ViewMyOrderDetails> {
             myOrderAdOnNames = List.generate(responseArrayGetOrderAdOns['data'].length, (index) => responseArrayGetOrderAdOns['data'][index]['itemadsonName'].toString());
             myOrderAdOnPrices = List.generate(responseArrayGetOrderAdOns['data'].length, (index) => responseArrayGetOrderAdOns['data'][index]['itemadsonPrice'].toString());
 
-            myOrderQtyAdDOns = List.generate(responseArrayGetOrderAdOns['data'].length, (index) => responseArrayGetOrderAdOns['data'][index]['orderQnty'].toString());
+            myOrderQtyAdDOns = List.generate(responseArrayGetOrderAdOns['data'].length, (index) => responseArrayGetOrderAdOns['data'][index]['adsonordersQnty'].toString());
+
+            myOrderAdsonItemType = List.generate(responseArrayGetOrderAdOns['data'].length, (index) => responseArrayGetOrderAdOns['data'][index]['adsonorderItemtype'].toString());
+
+            tmpSumA = List.generate(responseArrayGetOrderAdOns['data'].length, (index) => int.parse(responseArrayGetOrderAdOns['data'][index]['adsonordersQnty'].toString()) * int.parse(responseArrayGetOrderAdOns['data'][index]['itemadsonPrice'].toString()) );
+            totalItemAdons = myOrderQtyAdDOns.map((value)=>int.parse(value.toString())).reduce((x,y)=>x+y);
 
           });
+
+          print("///////////");
           print(myOrderAdOnNames);
           print(myOrderAdOnPrices);
-
+          print(myOrderAdsonItemType);
           print(myOrderQtyAdDOns);
+          print("///////////");
 
 
           for(i = 0; i < myOrderItemPrices.length; i++){
-            sumItems = myOrderItemPrices.map((value)=>int.parse(value)).reduce((x,y)=>x+y);
+            sumItems = tmpSum.map((value)=>int.parse(value.toString())).reduce((x,y)=>x+y);
           }
 
           for(i = 0; i < myOrderAdOnPrices.length; i++){
-            sumAdons = myOrderAdOnPrices.map((value)=>int.parse(value)).reduce((x,y)=>x+y);
+            sumAdons = tmpSumA.map((value)=>int.parse(value.toString())).reduce((x,y)=>x+y);
           }
 
           setState(() {
             int temp = sumItems + sumAdons;
 
-            myOrderTotal = temp + int.parse(widget.delivery) + ( int.parse(widget.tax)*int.parse(myOrderItemPrices.length.toString()) )  + ( int.parse(widget.packing)*int.parse(myOrderItemPrices.length.toString()) );
+            int deliveryTemp = 0;
+            int packingChargeTemp = 0;
+            double taxTemp = 0.0;
+
+            deliveryTemp = int.parse(ordersMap.length.toString()) * int.parse(widget.delivery); //for now taken multiplier 3 because there are 3 item types
+            packingChargeTemp = int.parse(totalItems.toString()) * int.parse(widget.packing);
+            taxTemp = temp * double.parse(widget.tax)/100;
+
+            print("totalItemsIII : " + (int.parse(totalItems.toString()) + int.parse(totalItemAdons.toString())).toString());
+            print("tempIII : " + temp.toString());
+            print("deliveryTempIII : " + deliveryTemp.toString());
+            print("packingChargeTempIII : " + packingChargeTemp.toString());
+            print("taxTempIII : " + taxTemp.toString());
+
+            //total = 80 + 5 + 20 + 3.6
+
+            myOrderTotal = temp + deliveryTemp + packingChargeTemp + taxTemp;
+
+            print("myOrderTotalIII" + myOrderTotal.toString());
+
 
           });
 
@@ -213,14 +275,30 @@ class _ViewMyOrderDetailsState extends State<ViewMyOrderDetails> {
           });
 
 
-          for(i = 0; i < myOrderItemPrices.length; i++){
-            sumItems = myOrderItemPrices.map((value)=>int.parse(value)).reduce((x,y)=>x+y);
+          for(i = 0; i < myOrderQtyItems.length; i++){
+            sumItems = tmpSum.map((value)=>int.parse(value.toString())).reduce((x,y)=>x+y);
           }
 
           setState(() {
-            int temp  = sumItems;
+            int temp  = sumItems; //total of item prices
 
-            myOrderTotal = myOrderTotal = temp + double.parse(widget.delivery) + ( (double.parse(widget.tax)/100)*double.parse(myOrderItemPrices.length.toString()) )  + ( double.parse(widget.packing)*double.parse(myOrderItemPrices.length.toString()) );
+            int deliveryTemp = 0;
+            int packingChargeTemp = 0;
+            double taxTemp = 0.0;
+
+            deliveryTemp = int.parse(ordersMap.length.toString()) * int.parse(widget.delivery); //for now taken multiplier 3 because there are 3 item types
+            packingChargeTemp = int.parse(totalItems.toString()) * int.parse(widget.packing);
+            taxTemp = temp * double.parse(widget.tax)/100;
+
+            print("totalItems" + totalItems.toString());
+            print("temp" + temp.toString());
+            print("deliveryTemp" + deliveryTemp.toString());
+            print("packingChargeTemp" + packingChargeTemp.toString());
+            print("taxTemp" + taxTemp.toString());
+
+            myOrderTotal = temp + deliveryTemp + packingChargeTemp + taxTemp;
+
+            print("myOrderTotal" + myOrderTotal.toString());
 
           }); //1500+5+18+20
 
@@ -253,6 +331,7 @@ class _ViewMyOrderDetailsState extends State<ViewMyOrderDetails> {
       if(statusCode == 200){
         if(responseArrayCancelOrderMsg == "Successfully"){
 
+          getOrderDetails(context);
 //          Fluttertoast.showToast(msg: 'This order has been cancelled', backgroundColor: Colors.black,
 //              textColor: Colors.white
 //          ).whenComplete((){
@@ -299,6 +378,7 @@ class _ViewMyOrderDetailsState extends State<ViewMyOrderDetails> {
       if(statusCode == 200){
         if(responseArrayMarkAsCompleteMsg == "Successfully"){
 
+          getOrderDetails(context);
 //          Fluttertoast.showToast(msg: 'This order has been marked as delivered', backgroundColor: Colors.black,
 //              textColor: Colors.white
 //          ).whenComplete((){
@@ -428,6 +508,9 @@ class _ViewMyOrderDetailsState extends State<ViewMyOrderDetails> {
     // TODO: implement initState
     super.initState();
     setState(() {
+      ordersMap = Map();
+      totalItems = null;
+      tmpSum = null;
       myOrderTotal = null;
       myOrderItemNames = null;
       myOrderAdOnNames = null;
@@ -453,6 +536,12 @@ class _ViewMyOrderDetailsState extends State<ViewMyOrderDetails> {
     getChotaBetaOrderIds(context);
     getOrderDetails(context);
   }
+
+  @override
+  void dispose() {
+    // TODO: implement dispose
+    super.dispose();
+  }
   
   @override
   Widget build(BuildContext context) {
@@ -462,7 +551,13 @@ class _ViewMyOrderDetailsState extends State<ViewMyOrderDetails> {
       backgroundColor: Colors.white,
       appBar: AppBar(
         backgroundColor: Colors.white,
-        title: Text(orderStatus == null ? widget.orderNumber : orderStatus[0] == "1" ? widget.orderNumber+" (Pending)" : orderStatus[0] == "2" ? widget.orderNumber+" (Delivered) " : orderStatus[0] == "3" ? widget.orderNumber+" (Cancelled) " : widget.orderNumber,
+        title: orderStatus == null || orderStatus == "null" ? Text(
+            widget.orderNumber,
+          style: GoogleFonts.nunitoSans(
+              fontSize: 16,
+              color: Colors.black
+          ),
+        ) : Text(orderStatus == null ? widget.orderNumber : orderStatus[0] == "1" ? widget.orderNumber+" (Pending)" : orderStatus[0] == "2" ? widget.orderNumber+" (Delivered) " : orderStatus[0] == "3" ? widget.orderNumber+" (Cancelled) " : widget.orderNumber,
             style: GoogleFonts.nunitoSans(
               fontSize: 16,
               color: Colors.black
@@ -547,33 +642,44 @@ class _ViewMyOrderDetailsState extends State<ViewMyOrderDetails> {
                     GestureDetector(
                       onTap: (){
                         //launch("tel://<"+myOrderCustomerContactNumbers[0]+">");
-                        myOrderIds.forEach((element) {
-                          int idx = myOrderIds.indexOf(element);
-                          setState(() {
-                            selectedOrderIdForCancelling = myOrderIds[idx].toString();
-                          });
-                          print("selectedOrderIdForCancelling :" + selectedOrderIdForCancelling.toString());
-                          cancelOrder(context).whenComplete((){
-                            Fluttertoast.showToast(msg: 'This order has been cancelled', backgroundColor: Colors.black,
-                                textColor: Colors.white
-                            );
-                            Future.delayed(Duration(seconds: 5), () async {
-                              getOrderDetails(context);
+                        if(orderStatus[0] == "1"){
+                          myOrderIds.forEach((element) {
+                            int idx = myOrderIds.indexOf(element);
+                            setState(() {
+                              selectedOrderIdForCancelling = myOrderIds[idx].toString();
+                            });
+                            print("selectedOrderIdForCancelling :" + selectedOrderIdForCancelling.toString());
+                            cancelOrder(context).whenComplete((){
+                              //Navigator.of(context).pop();
+                              Fluttertoast.showToast(msg: 'This order has been cancelled', backgroundColor: Colors.black,
+                                  textColor: Colors.white
+                              );
+                              Future.delayed(Duration(seconds: 5), () async {
+                                getOrderDetails(context);
+                              });
                             });
                           });
-                        });
+                        }else if(orderStatus[0] == "2"){
+                          Fluttertoast.showToast(msg: 'This order has been already been delivered', backgroundColor: Colors.black,
+                              textColor: Colors.white
+                          );
+                        }else if(orderStatus[0] == "3"){
+                          Fluttertoast.showToast(msg: 'This order has been already been cancelled', backgroundColor: Colors.black,
+                              textColor: Colors.white
+                          );
+                        }
                       },
                       child: Container(
                         height: 50,
                         width: MediaQuery.of(context).size.width,
                         decoration: BoxDecoration(
-                          color: Colors.grey,
+                          color: orderStatus == null ? Colors.grey : orderStatus[0] == "2" || orderStatus[0] == "3" ? Colors.grey[400] : Colors.grey,
                           borderRadius: BorderRadius.all(Radius.circular(10)),
                         ),
                         child: Center(
                           child: Text("Cancel Order",
                             style: GoogleFonts.nunitoSans(
-                              color: Colors.white,
+                              color: orderStatus == null ? Colors.grey : orderStatus[0] == "2" || orderStatus[0] == "3" ? Colors.grey[700] : Colors.white,
                               fontSize: 13,
                               fontWeight: FontWeight.bold,
                             ),
@@ -584,34 +690,45 @@ class _ViewMyOrderDetailsState extends State<ViewMyOrderDetails> {
                     SizedBox(height: 10,),
                     GestureDetector(
                       onTap: () async {
-                        myOrderIds.forEach((element) {
-                          int idx = myOrderIds.indexOf(element);
-                          setState(() {
-                            selectedOrderIdForMarkingAsComplete = myOrderIds[idx].toString();
-                          });
-                          print("selectedOrderIdForMarkingAsComplete :" + selectedOrderIdForMarkingAsComplete.toString());
-                          //prOrders3.show();
-                          markOrderAsComplete(context).whenComplete((){
-                            Fluttertoast.showToast(msg: 'This order has been marked as delivered', backgroundColor: Colors.black,
-                                textColor: Colors.white
-                            );
-                            Future.delayed(Duration(seconds: 5), () async {
-                              getOrderDetails(context);
+                        if(orderStatus[0] == "1"){
+                          myOrderIds.forEach((element) {
+                            int idx = myOrderIds.indexOf(element);
+                            setState(() {
+                              selectedOrderIdForMarkingAsComplete = myOrderIds[idx].toString();
+                            });
+                            print("selectedOrderIdForMarkingAsComplete :" + selectedOrderIdForMarkingAsComplete.toString());
+                            //prOrders3.show();
+                            markOrderAsComplete(context).whenComplete((){
+                              //Navigator.of(context).pop();
+                              Fluttertoast.showToast(msg: 'This order has been marked as delivered', backgroundColor: Colors.black,
+                                  textColor: Colors.white
+                              );
+                              Future.delayed(Duration(seconds: 5), () async {
+                                getOrderDetails(context);
+                              });
                             });
                           });
-                        });
+                        }else if(orderStatus[0] == "2"){
+                          Fluttertoast.showToast(msg: 'This order has been already been delivered', backgroundColor: Colors.black,
+                              textColor: Colors.white
+                          );
+                        }else if(orderStatus[0] == "3"){
+                          Fluttertoast.showToast(msg: 'This order has been already been cancelled', backgroundColor: Colors.black,
+                              textColor: Colors.white
+                          );
+                        }
                       },
                       child: Container(
                         height: 50,
                         width: MediaQuery.of(context).size.width,
                         decoration: BoxDecoration(
-                          color: Colors.green[700],
+                          color: orderStatus == null || orderStatus == "null" ? Colors.green[700] : orderStatus[0] == "2" || orderStatus[0] == "3" ? Colors.grey[400] : Colors.green[700],
                           borderRadius: BorderRadius.all(Radius.circular(10)),
                         ),
                         child: Center(
                           child: Text("Mark As Complete",
                             style: GoogleFonts.nunitoSans(
-                              color: Colors.white,
+                              color: orderStatus == null || orderStatus == "null" ? Colors.white : orderStatus[0] == "2" || orderStatus[0] == "3" ? Colors.grey[700] : Colors.white,
                               fontSize: 13,
                               fontWeight: FontWeight.bold,
                             ),
@@ -637,7 +754,7 @@ class _ViewMyOrderDetailsState extends State<ViewMyOrderDetails> {
             mainAxisAlignment: MainAxisAlignment.start,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              SizedBox(height: 10,),
+              SizedBox(height: 20,),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 crossAxisAlignment: CrossAxisAlignment.center,
@@ -657,29 +774,31 @@ class _ViewMyOrderDetailsState extends State<ViewMyOrderDetails> {
                   ),
                 ],
               ),
-              SizedBox(height: 5,),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  Text(myOrderPaymentStatus[0].toString() == "0" ? "Payment - Pending" : "Payment - Completed",
-                    style: GoogleFonts.nunitoSans(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      //color: Colors.green,fontWeight: FontWeight.bold,
-                    ),
+              SizedBox(height: 10,),
+
+              GestureDetector(
+                onTap: () async {
+                  final url = "https://maps.google.com/?q=<"+myOrderDeliveryAddressLat[0]+">,<"+myOrderDeliveryAddressLong[0]+"";//"https://www.google.com/maps/dir/?api=1&origin=" + origin + "&destination=" + address + "&travelmode=driving&dir_action=navigate";
+                  if (await canLaunch(url)) {
+                    await launch(url);
+                  } else {
+                    throw 'Could not launch $url';
+                  }
+                },
+                child: Text("Customer Address : "+customerAddress[0].toString(),
+                  style: GoogleFonts.nunitoSans(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.blue,
+                    //color: Colors.green,fontWeight: FontWeight.bold,
                   ),
-                  Text("Type - "+myOrderPaymentType[0],
-                    style: GoogleFonts.nunitoSans(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      //color: Colors.red,fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ],
+                ),
               ),
+
+
               SizedBox(height: 5,),
               Divider(color: Colors.black,),
+              /*
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 crossAxisAlignment: CrossAxisAlignment.center,
@@ -704,12 +823,30 @@ class _ViewMyOrderDetailsState extends State<ViewMyOrderDetails> {
                   ),
                 ],
               ),
-              SizedBox(height: 5,),
-              Divider(color: Colors.black,),
+
+               */
+//              SizedBox(height: 5,),
+//              Divider(color: Colors.black,),
               SizedBox(height: 10,),
+              Text("Order Items : ",
+                style: GoogleFonts.nunitoSans(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.blue,
+                  //color: Colors.green,fontWeight: FontWeight.bold,
+                ),
+              ),
               buildItemNamesBuilder(context),
               SizedBox(height: 10,),
               Divider(color: Colors.black,),
+              Text("Order Add Ons : ",
+                style: GoogleFonts.nunitoSans(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.blue,
+                  //color: Colors.green,fontWeight: FontWeight.bold,
+                ),
+              ),
               buildAdOnInfoBuilder(context),
               SizedBox(height: 10,),
               Divider(color: Colors.black,),
@@ -885,8 +1022,14 @@ class _ViewMyOrderDetailsState extends State<ViewMyOrderDetails> {
                             fontSize: 13,
                             fontWeight: FontWeight.bold,
                           ),
+                        ),SizedBox(height: 5,),
+                        Text("Order Type - "+myOrderTypes[index],
+                          style: GoogleFonts.nunitoSans(
+                            fontSize: 13,
+                          ),
                         ),
-                        SizedBox(height: 5,),
+                        //SizedBox(height: 5,),
+                        /*
                         Text("Total Price - Rs. - "+ (int.parse(myOrderItemPrices[index]) * int.parse(myOrderQtyItems[index])).toString(),
                           style: GoogleFonts.nunitoSans(
                             fontSize: 13,
@@ -919,9 +1062,12 @@ class _ViewMyOrderDetailsState extends State<ViewMyOrderDetails> {
 //                              color: Colors.red
 //                          ),
 //                        ),
+
+                         */
                       ],
                     ),
                   ),
+                  /*
                   Container(
                     width: MediaQuery.of(context).size.width/2.4,
                     child: Column(
@@ -957,9 +1103,11 @@ class _ViewMyOrderDetailsState extends State<ViewMyOrderDetails> {
                       ],
                     ),
                   ),
+
+                   */
                 ],
               ),
-              SizedBox(height: 10,),
+              //SizedBox(height: 10,),
 //              Text('Item Description',textScaleFactor: 1,style: GoogleFonts.nunitoSans(
 //                  color: Colors.black,
 //                  fontWeight: FontWeight.w600,
@@ -1265,12 +1413,27 @@ class _ViewMyOrderDetailsState extends State<ViewMyOrderDetails> {
         itemCount: myOrderAdOnNames == null ? 0 : myOrderAdOnNames.length,
         itemBuilder: (context, index) => Padding(
           padding: const EdgeInsets.only(top: 10),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            crossAxisAlignment: CrossAxisAlignment.center,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text((index+1).toString()+". "+myOrderAdOnNames[index].toString() + " (Qty x " + myOrderQtyAdDOns[index]+")"),
-              Text("Rs. "+myOrderAdOnPrices[index].toString()),
+              Text((index+1).toString()+". "+myOrderAdOnNames[index].toString() + " (Qty x " + myOrderQtyAdDOns[index]+")",
+                style: GoogleFonts.nunitoSans(
+                  fontSize: 13,fontWeight: FontWeight.bold,
+                ),
+              ),
+//              SizedBox(height: 10,),
+//              Text("Total Price - Rs. " + (int.parse(myOrderAdOnPrices[index]) * int.parse(myOrderQtyAdDOns[index])).toString(),
+//                style: GoogleFonts.nunitoSans(
+//                  fontSize: 13,
+//                ),
+//              ),
+              SizedBox(height: 5,),
+              Text("Order Type - " + myOrderAdsonItemType[index],
+                style: GoogleFonts.nunitoSans(
+                  fontSize: 13,
+                ),
+              ),
             ],
           ),
         ),

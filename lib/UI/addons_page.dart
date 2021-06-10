@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:progress_dialog/progress_dialog.dart';
+import 'package:vendor_dabbawala/UI/Shreyas/my_items.dart';
 import 'package:vendor_dabbawala/UI/manage_addons_page.dart';
 import 'data/login_data.dart' as login;
 import 'package:http/http.dart' as http;
@@ -175,6 +176,7 @@ class _AddAdonsPageState extends State<AddAdonsPage> {
     // TODO: implement initState
     super.initState();
     getItemAdons(context);
+    adonName = null;
     selectedAdOnIdForDeleting = null;
   }
   
@@ -199,7 +201,35 @@ class _AddAdonsPageState extends State<AddAdonsPage> {
             buildNameField(context),
             SizedBox(height: 10,),
             buildPriceField(context),
-            SizedBox(height: 10,),
+            SizedBox(height: 20,),
+            Padding(
+              padding: const EdgeInsets.only(left: 10, right: 10),
+              child: GestureDetector(
+                onTap: (){
+                  if(nameController.text.toString() == "" || nameController.text.toString() == " " || priceController.text.toString() == "" ||priceController.text.toString() == " " ){
+                    Fluttertoast.showToast(msg: 'Some fields are empty', backgroundColor: Colors.black, textColor: Colors.white);
+                  }else{
+                    prRemove.show();
+                    addAdOns(context);
+                  }
+                },
+                child: Container(
+                  height: MediaQuery.of(context).size.height/15,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.all(Radius.circular(10)),
+                    color: Colors.blue[700],
+                  ),
+                  child: Center(
+                    child: Text('Save AddOn',style: GoogleFonts.nunitoSans(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                        color: Colors.white
+                    ),),
+                  ),
+                ),
+              ),
+            ),
+            SizedBox(height: 20,),
           ],
         ),
       ),
@@ -536,61 +566,29 @@ class _AddAdonsPageState extends State<AddAdonsPage> {
   Widget buildSaveCancelButton(BuildContext context){
     return Padding(
       padding: const EdgeInsets.only(left: 0,right: 0),
-      child: Row(
-        children: [
-          Flexible(
-            child: GestureDetector(
-              onTap: (){
-                if(nameController.text.toString() == "" || nameController.text.toString() == " " || priceController.text.toString() == "" ||priceController.text.toString() == " " ){
-                  Fluttertoast.showToast(msg: 'Some fields are empty', backgroundColor: Colors.black, textColor: Colors.white);
-                }else{
-                  prRemove.show();
-                  addAdOns(context);
-                }
-              },
-              child: Container(
-                height: MediaQuery.of(context).size.height/15,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.all(Radius.circular(10)),
-                  color: Colors.blue[700],
-                ),
-                child: Center(
-                  child: Text('Save AddOn',style: GoogleFonts.nunitoSans(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                      color: Colors.white
-                  ),),
-                ),
-              ),
-            ),
+      child: GestureDetector(
+        onTap: (){
+          Navigator.of(context).popUntil((route) => route.isFirst);
+
+          Fluttertoast.showToast(msg: 'Item Saved', backgroundColor: Colors.black, textColor: Colors.white);
+        },
+        child: Container(
+          width: MediaQuery.of(context).size.width/1.2,
+          height: MediaQuery.of(context).size.height/15,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.all(Radius.circular(10)),
+            color: Colors.blue[700],
           ),
-          SizedBox(width: 20,),
-          Flexible(
-            child: GestureDetector(
-              onTap: (){
-                Navigator.of(context).popUntil((route) => route.isFirst);
-                Fluttertoast.showToast(msg: 'Item Saved', backgroundColor: Colors.black, textColor: Colors.white);
-              },
-              child: Container(
-                width: MediaQuery.of(context).size.width/2.2,
-                height: MediaQuery.of(context).size.height/15,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.all(Radius.circular(10)),
-                  color: Colors.blue[700],
-                ),
-                child: Center(
-                  child: Text('Done',
-                    textAlign: TextAlign.center,
-                    style: GoogleFonts.nunitoSans(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
-                        color: Colors.white
-                    ),),
-                ),
-              ),
-            ),
+          child: Center(
+            child: Text('Done',
+              textAlign: TextAlign.center,
+              style: GoogleFonts.nunitoSans(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                  color: Colors.white
+              ),),
           ),
-        ],
+        ),
       ),
     );
   }
