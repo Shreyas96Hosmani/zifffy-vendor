@@ -1,3 +1,5 @@
 
 
-String apiUrl = 'https://test.dabbawala.ml/mobileapi/vendor/';
+String apiUrl = 'https://testold.dabbawala.ml/mobileapi/vendor/';
+
+

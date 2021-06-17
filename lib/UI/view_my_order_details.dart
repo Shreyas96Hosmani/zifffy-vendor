@@ -66,6 +66,8 @@ var totalItemAdons;
 var customerAddress;
 var customerAddressSplitted;
 
+var flagString;
+
 class ViewMyOrderDetails extends StatefulWidget {
   final orderNumber;
   final delivery;
@@ -84,7 +86,7 @@ class _ViewMyOrderDetailsState extends State<ViewMyOrderDetails> {
 
     ordersMap = Map();
 
-    String url = "https://test.dabbawala.ml/mobileapi/vendor/getorderitemsbyodernonvendorid.php";
+    String url = globals.apiUrl + "getorderitemsbyodernonvendorid.php";
 
     http.post(url, body: {
 
@@ -185,7 +187,7 @@ class _ViewMyOrderDetailsState extends State<ViewMyOrderDetails> {
 
   Future<String> getOrderAdons(context) async {
 
-    String url = "https://test.dabbawala.ml/mobileapi/vendor/getorderadsonbyodernonvendorid.php";
+    String url = globals.apiUrl + "getorderadsonbyodernonvendorid.php";
 
     http.post(url, body: {
 
@@ -314,6 +316,7 @@ class _ViewMyOrderDetailsState extends State<ViewMyOrderDetails> {
     http.post(url, body: {
 
       "orderID": selectedOrderIdForCancelling.toString(),
+      "flags" : flagString.toString(),
 
     }).then((http.Response response) async {
       final int statusCode = response.statusCode;
@@ -361,6 +364,7 @@ class _ViewMyOrderDetailsState extends State<ViewMyOrderDetails> {
     http.post(url, body: {
 
       "orderID": selectedOrderIdForMarkingAsComplete.toString(),
+      "flags" : flagString.toString(),
 
     }).then((http.Response response) async {
       final int statusCode = response.statusCode;
@@ -403,7 +407,7 @@ class _ViewMyOrderDetailsState extends State<ViewMyOrderDetails> {
 
   Future<String> getChotaBetaOrderIds(context) async {
 
-    String url = "https://test.dabbawala.ml/mobileapi/user/getchotabetaorder.php";
+    String url = globals.apiUrl + "getchotabetaorder.php";
 
     http.post(url, body: {
 
@@ -443,6 +447,7 @@ class _ViewMyOrderDetailsState extends State<ViewMyOrderDetails> {
 
         }else{
 
+          print("ERRRRRRRRRRROOOORRRRR");
           setState(() {
             chotaBetaOrderIds = null;
           });
@@ -490,6 +495,8 @@ class _ViewMyOrderDetailsState extends State<ViewMyOrderDetails> {
 
       orderDeliveryBoyContact.add(chotaBetaPlaceGetOrderResponseArray['delivery_boy_mobile'].toString());
     });
+
+    print("CCCCCCCCCCCCCCC");
     print(orderIdsListChotaBeta.toList());
     print(orderStatusMessagesList.toList());
     print(orderDeliveryBoyId.toList());
@@ -498,6 +505,7 @@ class _ViewMyOrderDetailsState extends State<ViewMyOrderDetails> {
     print(orderDeliveryBoyLat.toList());
     print(orderDeliveryBoyLong.toList());
     print(orderDeliveryBoyContact.toList());
+    print("CCCCCCCCCCCCCCC");
 
     return jsonDecode(response.body);
 
@@ -647,6 +655,11 @@ class _ViewMyOrderDetailsState extends State<ViewMyOrderDetails> {
                             int idx = myOrderIds.indexOf(element);
                             setState(() {
                               selectedOrderIdForCancelling = myOrderIds[idx].toString();
+                              if(myOrderIds[idx].toString() == myOrderIds[myOrderIds.toList().length-1]){
+                                flagString = "true";
+                              }else{
+                                flagString = "false";
+                              }
                             });
                             print("selectedOrderIdForCancelling :" + selectedOrderIdForCancelling.toString());
                             cancelOrder(context).whenComplete((){
@@ -695,6 +708,11 @@ class _ViewMyOrderDetailsState extends State<ViewMyOrderDetails> {
                             int idx = myOrderIds.indexOf(element);
                             setState(() {
                               selectedOrderIdForMarkingAsComplete = myOrderIds[idx].toString();
+                              if(myOrderIds[idx].toString() == myOrderIds[myOrderIds.toList().length-1]){
+                                flagString = "true";
+                              }else{
+                                flagString = "false";
+                              }
                             });
                             print("selectedOrderIdForMarkingAsComplete :" + selectedOrderIdForMarkingAsComplete.toString());
                             //prOrders3.show();
@@ -928,66 +946,111 @@ class _ViewMyOrderDetailsState extends State<ViewMyOrderDetails> {
 //                  ),),
 //                ],
 //              ),
-            GestureDetector(
-              onTap: (){
-                getChotaBetaOrderIds(context);
-              },
-              child: Text('Order ID : '+orderIdsListChotaBeta[index],textScaleFactor: 1,style: GoogleFonts.nunitoSans(
-                  color: Colors.black,
-                  fontWeight: FontWeight.w600,
-                  fontSize: 12
-              ),),
-            ),
+//            GestureDetector(
+//              onTap: (){
+//                getChotaBetaOrderIds(context);
+//              },
+//              child: Text('Order ID : '+orderIdsListChotaBeta[index],textScaleFactor: 1,style: GoogleFonts.nunitoSans(
+//                  color: Colors.black,
+//                  fontWeight: FontWeight.w600,
+//                  fontSize: 12
+//              ),),
+//            ),
             orderStatusMessagesList[index].toString() == "null" ? Container() : Text('Status : '+orderStatusMessagesList[index],textScaleFactor: 1,style: GoogleFonts.nunitoSans(
                 color: Colors.black,
                 fontWeight: FontWeight.w600,
                 fontSize: 12
             ),),
-            SizedBox(height: 5,),
+            orderDeliveryBoyName[index].toString() == "null" ? Container() : SizedBox(height: 5,),
 //              Text(orderDeliveryBoyId[index].toString() == "null" ? 'orderDeliveryBoyId : Not Available' : 'orderDeliveryBoyId : '+orderDeliveryBoyId[index].toString(),textScaleFactor: 1,style: GoogleFonts.nunitoSans(
 //                  color: Colors.black,
 //                  fontWeight: FontWeight.w600,
 //                  fontSize: 12
 //              ),),SizedBox(height: 5,),
-            Text(orderDeliveryBoyName[index].toString() == "null" ? 'DeliveryBoyName : Not Available' : 'DeliveryBoyName : '+orderDeliveryBoyName[index].toString(),textScaleFactor: 1,style: GoogleFonts.nunitoSans(
+            orderDeliveryBoyName[index].toString() == "null" ? Container() : Text(orderDeliveryBoyName[index].toString() == "null" ? 'Delivery Boy Name : Not Available' : 'Delivery Boy Name : '+orderDeliveryBoyName[index].toString(),textScaleFactor: 1,style: GoogleFonts.nunitoSans(
+                color: Colors.black,
+                fontWeight: FontWeight.w600,
+                fontSize: 12
+            ),),//SizedBox(height: 5,),
+//            GestureDetector(
+//              onTap: (){
+//                if(orderDeliveryBoyContact[index].toString() == "null"){
+//
+//                }else{
+//                  launch("tel://<"+orderDeliveryBoyContact[index].toString()+">");
+//                }
+//              },
+//              child: Text(orderDeliveryBoyContact[index].toString() == "null" ? 'Delivery Boy Contact No. : Not Available' : 'Delivery Boy Contact No. : '+orderDeliveryBoyContact[index].toString(),textScaleFactor: 1,style: GoogleFonts.nunitoSans(
+//                  color: Colors.black,
+//                  fontWeight: FontWeight.w600,
+//                  fontSize: 12
+//              ),),
+//            ),
+            orderDeliveryBoyStatusText[index].toString() == "null" ? Container() : SizedBox(height: 5,),
+            orderDeliveryBoyStatusText[index].toString() == "null" ? Container() : Text(orderDeliveryBoyStatusText[index].toString() == "null" ? 'Delivery Boy Status : Not Available' : 'Delivery Boy Status : '+orderDeliveryBoyStatusText[index].toString(),textScaleFactor: 1,style: GoogleFonts.nunitoSans(
                 color: Colors.black,
                 fontWeight: FontWeight.w600,
                 fontSize: 12
             ),),SizedBox(height: 5,),
-            GestureDetector(
-              onTap: (){
-                if(orderDeliveryBoyContact[index].toString() == "null"){
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  orderDeliveryBoyContact[index].toString() == "null" ? Container() : GestureDetector(
+                    onTap: (){
+                      if(orderDeliveryBoyContact[index].toString() == "null"){
 
-                }else{
-                  launch("tel://<"+orderDeliveryBoyContact[index].toString()+">");
-                }
-              },
-              child: Text(orderDeliveryBoyContact[index].toString() == "null" ? 'DeliveryBoyContact : Not Available' : 'DeliveryBoyContact : '+orderDeliveryBoyContact[index].toString(),textScaleFactor: 1,style: GoogleFonts.nunitoSans(
-                  color: Colors.black,
-                  fontWeight: FontWeight.w600,
-                  fontSize: 12
-              ),),
-            ),SizedBox(height: 5,),
-            Text(orderDeliveryBoyStatusText[index].toString() == "null" ? 'orderDeliveryBoyStatusText : Not Available' : 'orderDeliveryBoyStatusText : '+orderDeliveryBoyStatusText[index].toString(),textScaleFactor: 1,style: GoogleFonts.nunitoSans(
-                color: Colors.black,
-                fontWeight: FontWeight.w600,
-                fontSize: 12
-            ),),SizedBox(height: 5,),
-            GestureDetector(
-              onTap: () async {
-                final url = "https://maps.google.com/?q=<"+orderDeliveryBoyLat[index]+">,<"+orderDeliveryBoyLong[index]+"";//"https://www.google.com/maps/dir/?api=1&origin=" + origin + "&destination=" + address + "&travelmode=driving&dir_action=navigate";
-                if (await canLaunch(url)) {
-                  await launch(url);
-                } else {
-                  throw 'Could not launch $url';
-                }
-              },
-              child: Text('See delivery boy location',textScaleFactor: 1,style: GoogleFonts.nunitoSans(
-                color: Colors.blue,
-                fontWeight: FontWeight.w600,
-                fontSize: 16,
-              ),),
-            ),SizedBox(height: 5,),
+                      }else{
+                        launch("tel://<"+orderDeliveryBoyContact[index].toString()+">");
+                      }
+                    },
+                    child: CircleAvatar(
+                      backgroundColor: Colors.blue[700],
+                      child: Icon(
+                        Icons.call,
+                        color: Colors.white,
+                        size: 20,
+                      ),
+                      radius: 20,
+                    ),
+                  ),
+                  SizedBox(width: 10,),
+                  orderDeliveryBoyLat[index].toString() == "null" || orderDeliveryBoyLong[index].toString() == "null" ? Container() : GestureDetector(
+                    onTap: () async {
+                      final url = "https://maps.google.com/?q=<"+orderDeliveryBoyLat[index]+">,<"+orderDeliveryBoyLong[index]+"";//"https://www.google.com/maps/dir/?api=1&origin=" + origin + "&destination=" + address + "&travelmode=driving&dir_action=navigate";
+                      if (await canLaunch(url)) {
+                      await launch(url);
+                      } else {
+                      throw 'Could not launch $url';
+                      }
+                    },
+                    child: CircleAvatar(
+                      backgroundColor: Colors.blue[700],
+                      child: Icon(
+                        Icons.pin_drop,
+                        color: Colors.white,
+                        size: 20,
+                      ),
+                      radius: 20,
+                    ),
+                  ),
+                ],
+              ),SizedBox(height: 5,),
+//            GestureDetector(
+//              onTap: () async {
+//                final url = "https://maps.google.com/?q=<"+orderDeliveryBoyLat[index]+">,<"+orderDeliveryBoyLong[index]+"";//"https://www.google.com/maps/dir/?api=1&origin=" + origin + "&destination=" + address + "&travelmode=driving&dir_action=navigate";
+//                if (await canLaunch(url)) {
+//                  await launch(url);
+//                } else {
+//                  throw 'Could not launch $url';
+//                }
+//              },
+//              child: Text('See delivery boy location',textScaleFactor: 1,style: GoogleFonts.nunitoSans(
+//                color: Colors.blue,
+//                fontWeight: FontWeight.w600,
+//                fontSize: 16,
+//              ),),
+//            ),SizedBox(height: 5,),
             Divider(),
           ],
         ),
@@ -1704,5 +1767,259 @@ class _ViewMyOrderDetailsState extends State<ViewMyOrderDetails> {
          */
     );
   }
+
+  /*
+  Widget temp(BuildContext context){
+    return Container(
+      child: ListView.builder(
+        physics: ScrollPhysics(),
+        shrinkWrap: true,
+        scrollDirection: Axis.vertical,
+        itemCount: providerListener.ChotaBetaOrderList.length,
+        itemBuilder: (context, index) => InkWell(
+          onTap: () {},
+          child: Container(
+            margin: EdgeInsets.only(bottom: 10),
+            padding: EdgeInsets.only(top: 10),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.all(Radius.circular(7)),
+              color: Color(COLOR_TEXT_WHITE),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.grey.withOpacity(0.2),
+                  spreadRadius: 0.5,
+                  blurRadius: 4,
+                  offset: Offset(0, 3), // changes position of shadow
+                ),
+              ],
+            ),
+            width: MediaQuery.of(context).size.width,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                /* Padding(
+                            padding: EdgeInsets.only(left: 5, right: 10),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                InkWell(
+                                  onTap: () {},
+                                  child: Padding(
+                                    padding: const EdgeInsets.only(
+                                        left: 0, right: 10),
+                                    child: Align(
+                                      alignment: Alignment.centerLeft,
+                                      child: Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceEvenly,
+                                        children: [
+                                          Container(
+                                            width: screenWidth - 100,
+                                            child: Text(
+                                              '#' +
+                                                  providerListener
+                                                      .ChotaBetaOrderList[index]
+                                                      .chotabetaOrderid,
+                                              maxLines: 2,
+                                              overflow: TextOverflow.ellipsis,
+                                              style: GoogleFonts.nunitoSans(
+                                                color: Color(COLOR_TEXT_BLACK),
+                                                fontSize: 17,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                //  buildAdsonCartPlusMinusButton(context, index),
+                              ],
+                            ),
+                          ),*/
+                Padding(
+                  padding: EdgeInsets.only(left: 10, right: 10),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      InkWell(
+                        onTap: () {},
+                        child: Padding(
+                          padding: const EdgeInsets.only(
+                              left: 0, right: 10),
+                          child: Align(
+                            alignment: Alignment.centerLeft,
+                            child: Row(
+                              mainAxisAlignment:
+                              MainAxisAlignment.spaceEvenly,
+                              children: [
+                                Container(
+                                  width: screenWidth - 100,
+                                  child: Text(
+                                    'Status: ' +
+                                        providerListener
+                                            .delivery_boy_status_text[
+                                        index] ??
+                                        "",
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: GoogleFonts.nunitoSans(
+                                      color: Color(COLOR_TEXT_BLACK),
+                                      fontSize: 17,
+                                      fontWeight: FontWeight.w400,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                      //  buildAdsonCartPlusMinusButton(context, index),
+                    ],
+                  ),
+                ),
+                providerListener.delivery_boy_name[index] == "NA"
+                    ? SizedBox(height: 20)
+                    : SizedBox(height: 1),
+                providerListener.delivery_boy_name[index] != "NA"
+                    ? Padding(
+                  padding: EdgeInsets.only(left: 10, right: 10),
+                  child: Row(
+                    mainAxisAlignment:
+                    MainAxisAlignment.spaceBetween,
+                    children: [
+                      InkWell(
+                        onTap: () {},
+                        child: Padding(
+                          padding: const EdgeInsets.only(
+                              left: 0, right: 10),
+                          child: Align(
+                            alignment: Alignment.centerLeft,
+                            child: Row(
+                              mainAxisAlignment:
+                              MainAxisAlignment.spaceEvenly,
+                              children: [
+                                Container(
+                                  width: screenWidth - 100,
+                                  child: Text(
+                                    'Delivery Boy Name: ' +
+                                        providerListener
+                                            .delivery_boy_name[
+                                        index] ??
+                                        "",
+                                    maxLines: 2,
+                                    overflow:
+                                    TextOverflow.ellipsis,
+                                    style:
+                                    GoogleFonts.nunitoSans(
+                                      color: Color(
+                                          COLOR_TEXT_BLACK),
+                                      fontSize: 17,
+                                      fontWeight:
+                                      FontWeight.w400,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                      //  buildAdsonCartPlusMinusButton(context, index),
+                    ],
+                  ),
+                )
+                    : SizedBox(height: 1),
+                providerListener.delivery_boy_name[index] != "NA"
+                    ? Padding(
+                  padding: EdgeInsets.only(
+                      top: 0, left: 10, right: 20, bottom: 10),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      InkWell(
+                        onTap: () async {
+                          if ((providerListener
+                              .delivery_boy_latitude[
+                          index] ??
+                              "") !=
+                              "NA") {
+                            final url = "https://maps.google.com/?q=<" +
+                                (providerListener
+                                    .delivery_boy_latitude[
+                                index] ??
+                                    "") +
+                                ">,<" +
+                                (providerListener
+                                    .delivery_boy_longitude[
+                                index] ??
+                                    "") +
+                                "";
+                            if (await canLaunch(url)) {
+                              await launch(url);
+                            } else {
+                              throw 'Could not launch $url';
+                            }
+                          } else {
+                            snackbarCommon(context,
+                                "Delivery boy not assigned");
+                          }
+                        },
+                        child: CircleAvatar(
+                          backgroundColor: Color(COLOR_PRIMARY),
+                          child: Icon(
+                            Icons.gps_fixed_sharp,
+                            color: Colors.white,
+                            size: 20,
+                          ),
+                          radius: 20,
+                        ),
+                      ),
+                      SizedBox(
+                        width: 20,
+                      ),
+                      InkWell(
+                        onTap: () {
+                          if ((providerListener
+                              .delivery_boy_mobile[
+                          index] ??
+                              "") !=
+                              "NA") {
+                            launch("tel://" +
+                                (providerListener
+                                    .delivery_boy_mobile[
+                                index] ??
+                                    ""));
+                          } else {
+                            snackbarCommon(context,
+                                "Delivery boy not assigned");
+                          }
+                        },
+                        child: CircleAvatar(
+                          backgroundColor: Color(COLOR_PRIMARY),
+                          child: Icon(
+                            Icons.call,
+                            color: Colors.white,
+                            size: 20,
+                          ),
+                          radius: 20,
+                        ),
+                      ),
+                    ],
+                  ),
+                )
+                    : SizedBox(height: 1),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+   */
 
 }

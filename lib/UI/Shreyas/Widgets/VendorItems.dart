@@ -292,7 +292,7 @@ class _VendorItemsListState extends State<VendorItemsList> {
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.all(Radius.circular(15)),
                         ),
-                        child: Image.network("https://test.dabbawala.ml/"+image.reversed.toList()[index].toString(),scale: 2,fit: BoxFit.fill,),
+                        child: Image.network("https://admin.dabbawala.ml/"+image.reversed.toList()[index].toString(),scale: 2,fit: BoxFit.fill,),
                       ),
                       SizedBox(width: 10,),
                       Column(

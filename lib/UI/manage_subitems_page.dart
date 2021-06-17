@@ -37,7 +37,7 @@ class _ManageSubItemsState extends State<ManageSubItems> {
 
   Future<String> getSubItemList(context) async {
 
-    String url = "https://test.dabbawala.ml/mobileapi/user/getsubitembyitemid.php";
+    String url = "https://testold.dabbawala.ml/mobileapi/user/getsubitembyitemid.php";
 
     http.post(url, body: {
 

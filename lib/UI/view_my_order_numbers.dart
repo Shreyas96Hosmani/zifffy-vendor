@@ -532,7 +532,7 @@ class _ViewMyOrderNumbersState extends State<ViewMyOrderNumbers> {
                                       Padding(
                                         padding: const EdgeInsets.only(left: 5),
                                         child: Text("${ordersMapA[key]}",textScaleFactor: 1,),
-                                      )
+                                      ),
                                     ],
                                   ),
                                 ),
