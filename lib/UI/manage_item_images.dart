@@ -132,7 +132,7 @@ class _ManageItemImagesState extends State<ManageItemImages> {
           //prGetItems.hide();
           setState(() {
             imageIds = List.generate(responseArrayGetImages['data'].length, (index) => responseArrayGetImages['data'][index]['iimID'].toString());
-            images = List.generate(responseArrayGetImages['data'].length, (index) => "https://admin.dabbawala.ml/"+responseArrayGetImages['data'][index]['imageName'].toString());
+            images = List.generate(responseArrayGetImages['data'].length, (index) => "https://test.dabbawala.ml/"+responseArrayGetImages['data'][index]['imageName'].toString());
             if(images.length == 0){
 
             }else if(images.length == 1){

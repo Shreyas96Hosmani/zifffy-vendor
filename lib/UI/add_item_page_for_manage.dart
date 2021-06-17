@@ -51,7 +51,10 @@ List<int> selectedItemsTypes = [];
 
 int itemTypeLength;
 var prevTypeList;
-var newTypeList;
+List<int> newTypeList;
+
+var itSt;
+var itemIdssss;
 
 class AddItemPageForManage extends StatefulWidget {
   final id;
@@ -88,15 +91,16 @@ class _AddItemPageForManageState extends State<AddItemPageForManage> {
 
     http.post(url, body: {
 
-      "itemID" : widget.id.toString(),
+      "itemID" : itemIdForSending.toString(),
       "vendorID": login.storedUserId.toString(),
       "itemname" : add.addNewItemNameController.text.toString(),
       "cuisineID": selectedCuisineId.toString(),
-      "itemtype": selectedItemType.toString(),//selectedItemsTypes.toList().toString(),//selectedItemType.toString(), [Breakfast, Snacks]
+      "itemtype": saveSelectedItemTypeBLSD.toString(),//selectedItemType.toString(),//selectedItemsTypes.toList().toString(),//selectedItemType.toString(), [Breakfast, Snacks]
       "itemcategory":add.itemCategory.toString(),
-      "itemamount": add.addNewItemAmountNumController.text.toString() + add.itemQuantity.toString(),
+      "itemamount": "50gms",//add.addNewItemAmountNumController.text.toString() + add.itemQuantity.toString(),
       "itemprice": add.addNewItemPriceController.text.toString(),
       "itemdescription": add.addNewItemDescriptionController.text.toString(),
+      "itemstatus" : itemStatusForSending.toString(),
 
     }).then((http.Response response) async {
       final int statusCode = response.statusCode;
@@ -116,7 +120,6 @@ class _AddItemPageForManageState extends State<AddItemPageForManage> {
 
             Fluttertoast.showToast(msg: "Saved", backgroundColor: Colors.black, textColor: Colors.white);
             print(add.addNewItemMessage);
-            Navigator.of(context).pop();
 
           });
         }else{
@@ -286,15 +289,19 @@ class _AddItemPageForManageState extends State<AddItemPageForManage> {
           //prGetItems.hide();
           setState(() {
 
-            itemTypesss = List.generate(responseArrayGetItemsByMasterId['data'].length, (index) => responseArrayGetItemsByMasterId['data'][index]['itemType'] == "Breakfast" ? 0 : responseArrayGetItemsByMasterId['data'][index]['itemType'] == "Lunch" ? 1 : responseArrayGetItemsByMasterId['data'][index]['itemType'] == "Snacks" ? 2 : 3);
-            prevTypeList = itemTypesss;
+            itemIdssss = List.generate(responseArrayGetItemsByMasterId['data'].length, (index) => responseArrayGetItemsByMasterId['data'][index]['itemID']);
+            saveSelectedItemTypeBLSDList = List.generate(responseArrayGetItemsByMasterId['data'].length, (index) => responseArrayGetItemsByMasterId['data'][index]['itemType']);
+            newTypeList = List.generate(responseArrayGetItemsByMasterId['data'].length, (index) => responseArrayGetItemsByMasterId['data'][index]['itemType'] == "Breakfast" && (responseArrayGetItemsByMasterId['data'][index]['itemStatus'].toString() == "1" ||  responseArrayGetItemsByMasterId['data'][index]['itemStatus'].toString() == "2") ? 0 : responseArrayGetItemsByMasterId['data'][index]['itemType'] == "Lunch"&& (responseArrayGetItemsByMasterId['data'][index]['itemStatus'].toString() == "1" ||  responseArrayGetItemsByMasterId['data'][index]['itemStatus'].toString() == "2") ? 1 : responseArrayGetItemsByMasterId['data'][index]['itemType'] == "Snacks"&& (responseArrayGetItemsByMasterId['data'][index]['itemStatus'].toString() == "1" ||  responseArrayGetItemsByMasterId['data'][index]['itemStatus'].toString() == "2") ? 2 : responseArrayGetItemsByMasterId['data'][index]['itemType'] == "Dinner"&& (responseArrayGetItemsByMasterId['data'][index]['itemStatus'].toString() == "1" ||  responseArrayGetItemsByMasterId['data'][index]['itemStatus'].toString() == "2") ? 3 : null);
+            itSt  = List.generate(responseArrayGetItemsByMasterId['data'].length, (index) => responseArrayGetItemsByMasterId['data'][index]['itemStatus']);
 
-            itemTypeLength = itemTypesss.length;
+            print("******");
+            print(itemIdssss.toList());
+            print(saveSelectedItemTypeBLSDList.toList());
+            print(itSt.toList());
+            print("******");
 
           });
-          print(itemTypesss);
-          print(prevTypeList);
-          print("itemTypeLength : "+itemTypeLength.toString());
+
 
         }else{
           //prGetItems.hide();
@@ -326,7 +333,12 @@ class _AddItemPageForManageState extends State<AddItemPageForManage> {
     getCuisines(context);
     setState(() {
 
-      itemTypesss = [];
+      itemStatusForSending = null;
+      saveSelectedItemTypeBLSD = null;
+      saveSelectedItemTypeBLSDList2 = [];
+      saveSelectedItemTypeBLSDList = [];
+
+      itemTypesss = []; newTypeList = [];
       selectedCuisineId = null;
 
       changeCuisine = false;
@@ -463,10 +475,10 @@ class _AddItemPageForManageState extends State<AddItemPageForManage> {
                 SizedBox(
                   height: MediaQuery.of(context).size.height / 90,
                 ),
-                buildAmountField(context),
-                SizedBox(
-                  height: MediaQuery.of(context).size.height / 90,
-                ),
+//                buildAmountField(context),
+//                SizedBox(
+//                  height: MediaQuery.of(context).size.height / 90,
+//                ),
                 buildPriceField(context),
                 SizedBox(
                   height: MediaQuery.of(context).size.height / 90,
@@ -718,8 +730,176 @@ class _AddItemPageForManageState extends State<AddItemPageForManage> {
             ),
           ),
           SizedBox(
-            height: 10,
+            height: 20,
           ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: MediaQuery.of(context).size.width/2.5,
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    GestureDetector(
+                      onTap: (){
+                        print("breakfast pressed");
+                        if(newTypeList.contains(0)){
+                          setState(() {
+                            newTypeList.remove(0);
+                          });
+                        }else{
+                          setState(() {
+                            newTypeList.add(0);
+                          });
+                        }
+                        print(newTypeList);
+                      },
+                      child: Container(
+                        width: MediaQuery.of(context).size.width/2.7,
+                        child: Row(
+                          children: [
+                            SizedBox(width: 3,),
+                            Container(
+                              height: 20, width: 20,
+                              decoration: BoxDecoration(
+                                  border: Border.all(color: Colors.black),
+                                  color: newTypeList.contains(0) ? Colors.blue : Colors.white
+                              ),
+                            ),SizedBox(width: 10,),
+                            Text("Breakfast",
+                              style: TextStyle(
+                                fontSize: 16,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),SizedBox(height: 20,),
+                    GestureDetector(
+                      onTap: (){
+                        print("Snacks pressed");
+                        if(newTypeList.contains(2)){
+                          setState(() {
+                            newTypeList.remove(2);
+                          });
+                        }else{
+                          setState(() {
+                            newTypeList.add(2);
+                          });
+                        }
+                        print(newTypeList);
+                      },
+                      child: Container(
+                        width: MediaQuery.of(context).size.width/2.7,
+                        child: Row(
+                          children: [
+                            SizedBox(width: 3,),
+                            Container(
+                              height: 20, width: 20,
+                              decoration: BoxDecoration(
+                                  border: Border.all(color: Colors.black),
+                                  color: newTypeList.contains(2) ? Colors.blue : Colors.white
+                              ),
+                            ),SizedBox(width: 10,),
+                            Text("Snacks",
+                              style: TextStyle(
+                                fontSize: 16,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Container(
+                width: MediaQuery.of(context).size.width/2.5,
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    GestureDetector(
+                      onTap: (){
+                        print("Lunch pressed");
+                        if(newTypeList.contains(1)){
+                          setState(() {
+                            newTypeList.remove(1);
+                          });
+                        }else{
+                          setState(() {
+                            newTypeList.add(1);
+                          });
+                        }
+                        print(newTypeList);
+                      },
+                      child: Container(
+                        width: MediaQuery.of(context).size.width/2.7,
+                        child: Row(
+                          children: [
+                            SizedBox(width: 3,),
+                            Container(
+                              height: 20, width: 20,
+                              decoration: BoxDecoration(
+                                  border: Border.all(color: Colors.black),
+                                  color: newTypeList.contains(1) ? Colors.blue : Colors.white
+                              ),
+                            ),SizedBox(width: 10,),
+                            Text("Lunch",
+                              style: TextStyle(
+                                fontSize: 16,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),SizedBox(height: 20,),
+                    GestureDetector(
+                      onTap: (){
+                        print("Dinner pressed");
+                        if(newTypeList.contains(3)){
+                          setState(() {
+                            newTypeList.remove(3);
+                          });
+                        }else{
+                          setState(() {
+                            newTypeList.add(3);
+                          });
+                        }
+                        print(newTypeList);
+                      },
+                      child: Container(
+                        width: MediaQuery.of(context).size.width/2.7,
+                        child: Row(
+                          children: [
+                            SizedBox(width: 3,),
+                            Container(
+                              height: 20, width: 20,
+                              decoration: BoxDecoration(
+                                  border: Border.all(color: Colors.black),
+                                  color: newTypeList.contains(3) ? Colors.blue : Colors.white
+                              ),
+                            ),SizedBox(width: 10,),
+                            Text("Dinner",
+                              style: TextStyle(
+                                fontSize: 16,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          SizedBox(
+            height: 20,
+          ),
+          /*
           Container(
             child: Align(
               alignment: Alignment.center,
@@ -733,48 +913,18 @@ class _AddItemPageForManageState extends State<AddItemPageForManage> {
                     ),
                   );
                 }).toList(),
-                selectedItems: itemTypesss,
+                selectedItems: newTypeList,
                 hint: "Select Item Type",
                 searchHint: "",
                 doneButton: "Close",
                 closeButton: SizedBox.shrink(),
                 onChanged: (value) {
                   setState(() {
-                    itemTypesss = itemTypesss.toList();
-                    itemTypesss = value;
+                    newTypeList = newTypeList.toList();
+                    newTypeList = value;
                   });
 
-                  if(itemTypesss.length > itemTypeLength){
-
-                    //new item types added
-                    print("new item types added");   // [0,1]->[0,1,2] OR [0,1]->[0,1,2,3]   OR [0,1]->[1,2,3] OR [0,1]->[1,2,3]
-                    newTypeList = itemTypesss.where((element) => !prevTypeList.contains(element));
-
-                  }else if(itemTypesss.length < itemTypeLength){
-
-                    //itemTypes removed
-                    print("itemTypes removed");  // [0,1]->[0] OR [0,1]->[1]
-                    newTypeList = prevTypeList.where((element) => !itemTypesss.contains(element));
-
-                  }else{
-
-                    if(itemTypesss.length == itemTypeLength){
-
-                      if(prevTypeList == itemTypesss){
-
-                        //No Change
-                        print("Item Type Shifted"); // [0]->[1] OR [1]->[0] OR [0,1]->[2,3] [0,1]->[0,3] OR ANYTHING.....   [Breakfast, Lunch] -> [Breakfast, Snacks, Dinner]
-
-                      }else{
-
-                        //Item Type removed from one and inserted into anothet (i.e shifted from Breakfast/Lunch to Snacks/Dinner)
-                        print("No Change");// [0,1] -> [0,1]
-
-                      }
-
-                    }
-
-                  }
+                  print(newTypeList);
 
                 },
                 dialogBox: false,
@@ -783,6 +933,8 @@ class _AddItemPageForManageState extends State<AddItemPageForManage> {
               ),
             ),
           ),
+
+           */
         ],
       ),
     );
@@ -1279,14 +1431,66 @@ class _AddItemPageForManageState extends State<AddItemPageForManage> {
                 child: GestureDetector(
                   onTap: (){
                     if(add.addNewItemNameController.text.toString() == null || add.addNewItemNameController.text.toString() == "" || selectedCuisineId == null || selectedCuisineId == "null" ||
-                        selectedItemType == null || selectedItemType == "null" || add.itemCategory.toString() == null || add.itemCategory.toString() == "null" ||
-                        add.addNewItemAmountNumController.text.toString() == null || add.addNewItemAmountNumController.text.toString() == "" || add.itemQuantity == null || add.itemQuantity == "null" ||
+                        newTypeList.isEmpty || add.itemCategory.toString() == null || add.itemCategory.toString() == "null" ||
                         add.addNewItemPriceController.text.toString() == null || add.addNewItemPriceController.text.toString() == "" ||
                         add.addNewItemDescriptionController.text.toString() == null || add.addNewItemDescriptionController.text.toString() == ""){
                       Fluttertoast.showToast(msg: "All fields are mandatory!", backgroundColor: Colors.black, textColor: Colors.white);
+
+
                     }else{
+
+                      saveSelectedItemTypeBLSDList2.clear();
                       prAddItem.show();
-                      addNewItem(context);
+
+                      newTypeList.forEach((element) {
+
+                        int idx = newTypeList.indexOf(element);
+
+                        if(newTypeList[idx].toString() == "0"){
+                          saveSelectedItemTypeBLSDList2.add('Breakfast');
+                        }else if(newTypeList[idx].toString() == "1"){
+                          saveSelectedItemTypeBLSDList2.add('Lunch');
+                        }else if(newTypeList[idx].toString() == "2"){
+                          saveSelectedItemTypeBLSDList2.add('Snacks');
+                        }else{
+                          saveSelectedItemTypeBLSDList2.add('Dinner');
+                        }
+
+                        print(saveSelectedItemTypeBLSDList2);
+
+//                    print(saveSelectedItemTypeBLSD);
+//                    print(saveSelectedItemTypeBLSDList.toList());
+
+                      });
+
+                      saveSelectedItemTypeBLSDList.forEach((element) {
+
+                        int idx = saveSelectedItemTypeBLSDList.indexOf(element);
+
+                        saveSelectedItemTypeBLSD = saveSelectedItemTypeBLSDList[idx].toString();
+                        itemIdForSending = itemIdssss[idx];
+
+                        if(saveSelectedItemTypeBLSDList2.toList().contains(saveSelectedItemTypeBLSDList[idx])){
+
+                          if(itSt[idx].toString() == "2"){
+                            itemStatusForSending = "2";
+                            print("trueeee");
+                          }else{
+                            itemStatusForSending = "1";
+                          }
+
+                        }else{
+                          itemStatusForSending = "0";
+                        }
+
+                        print("idx : " + idx.toString() + " saveSelectedItemTypeBLSD : " + saveSelectedItemTypeBLSD);
+                        print("idx : " + idx.toString() + " itemStatusForSending : " + itemStatusForSending);
+                        print("idx : " + idx.toString() + " itemIdForSending : " + itemIdForSending);
+
+                        addNewItem(context);
+
+                      });
+
 //                    print("else loop entered...");
 //                    prAddItem.show();
 //                    addNewItem(context);
@@ -1674,3 +1878,11 @@ class _AddItemPageForManageState extends State<AddItemPageForManage> {
   }
 
 }
+
+var saveSelectedItemTypeBLSD;
+var saveSelectedItemTypeBLSDList;
+var saveSelectedItemTypeBLSDList2;
+
+var itemStatusForSending;
+
+var itemIdForSending;

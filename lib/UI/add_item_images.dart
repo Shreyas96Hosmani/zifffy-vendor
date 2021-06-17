@@ -29,6 +29,8 @@ var fileNameUniversal3;
 
 ProgressDialog prImage;
 
+bool imageUploaded = false;
+
 class AddItemImages extends StatefulWidget {
   final id;
   AddItemImages(this.id) : super();
@@ -133,7 +135,7 @@ class _AddItemImagesState extends State<AddItemImages> {
           //prGetItems.hide();
           setState(() {
             imageIds = List.generate(responseArrayGetImages['data'].length, (index) => responseArrayGetImages['data'][index]['iimID'].toString());
-            images = List.generate(responseArrayGetImages['data'].length, (index) => "https://admin.dabbawala.ml/"+responseArrayGetImages['data'][index]['imageName'].toString());
+            images = List.generate(responseArrayGetImages['data'].length, (index) => "https://test.dabbawala.ml/"+responseArrayGetImages['data'][index]['imageName'].toString());
             if(images.length == 0){
 
             }else if(images.length == 1){
@@ -193,6 +195,9 @@ class _AddItemImagesState extends State<AddItemImages> {
       if(statusCode == 200){
         if(responseArrayAddImage1Msg == "Successfully"){
 
+          setState(() {
+            imageUploaded = true;
+          });
           prImage.hide();
           //prGetItems.hide();
           Fluttertoast.showToast(msg: "Saved", backgroundColor: Colors.black, textColor: Colors.white);
@@ -238,6 +243,9 @@ class _AddItemImagesState extends State<AddItemImages> {
 
       if(statusCode == 200){
         if(responseArrayAddImage2Msg == "Successfully"){
+          setState(() {
+            imageUploaded = true;
+          });
           prImage.hide();
           Fluttertoast.showToast(msg: "Saved", backgroundColor: Colors.black, textColor: Colors.white);
           getItemImages(context);
@@ -279,6 +287,10 @@ class _AddItemImagesState extends State<AddItemImages> {
 
       if(statusCode == 200){
         if(responseArrayAddImage3Msg == "Successfully"){
+
+          setState(() {
+            imageUploaded = true;
+          });
           prImage.hide();
           Fluttertoast.showToast(msg: "Saved", backgroundColor: Colors.black, textColor: Colors.white);
           getItemImages(context);
@@ -418,6 +430,7 @@ class _AddItemImagesState extends State<AddItemImages> {
   void initState() {
     // TODO: implement initState
     super.initState();
+    imageUploaded = false;
     images = null;
     imageOne = null;
     imageTwo = null;
@@ -428,7 +441,7 @@ class _AddItemImagesState extends State<AddItemImages> {
   @override
   Widget build(BuildContext context) {
     prImage = ProgressDialog(context);
-    prImage.style(message: "Please wait while the image is being uploaded!", backgroundColor: Colors.black, messageTextStyle: TextStyle(
+    prImage.style(message: "Please wait...", backgroundColor: Colors.black, messageTextStyle: TextStyle(
         color: Colors.white)
     );
     return Scaffold(
@@ -439,7 +452,9 @@ class _AddItemImagesState extends State<AddItemImages> {
         child: buildSaveCancelButton(context),
       ),
       body: images == null ? Center(child: CircularProgressIndicator(),) : WillPopScope(
-          onWillPop: (){},
+          onWillPop: () => imageUploaded == true ? showAlertDialog(context) : Fluttertoast.showToast(msg: 'Please upload atleast 1 image for the item!',
+            backgroundColor: Colors.black, textColor: Colors.white
+          ),
           child: buildPictureArea(context)),
     );
   }
@@ -454,19 +469,21 @@ class _AddItemImagesState extends State<AddItemImages> {
       ),
       centerTitle: true,
       elevation: 0,
-      leading: InkWell(
-        onTap: (){
-          if(imageOne == null && imageTwo == null && imageThree == null){
-            Fluttertoast.showToast(msg: 'Please upload atleast one image!', backgroundColor: Colors.black, textColor: Colors.white);
-          }else{
-            Navigator.of(context).popUntil((route) => route.isFirst);
-          }
-        },
-        child: Icon(
-          Icons.arrow_back,
-          color: Colors.black,
-        ),
-      ),
+      leading: Container(),
+
+//      InkWell(
+//        onTap: (){
+//          if(imageOne == null && imageTwo == null && imageThree == null){
+//            Fluttertoast.showToast(msg: 'Please upload atleast one image!', backgroundColor: Colors.black, textColor: Colors.white);
+//          }else{
+//            Navigator.of(context).popUntil((route) => route.isFirst);
+//          }
+//        },
+//        child: Icon(
+//          Icons.arrow_back,
+//          color: Colors.black,
+//        ),
+//      ),
 
     );
   }
@@ -636,6 +653,7 @@ class _AddItemImagesState extends State<AddItemImages> {
                 textAlign: TextAlign.center,
                 style: GoogleFonts.nunitoSans(
                   color: Colors.red,
+                  fontWeight: FontWeight.bold
                 ),
               ),
             ),
@@ -650,7 +668,7 @@ class _AddItemImagesState extends State<AddItemImages> {
       padding: const EdgeInsets.only(left: 0,right: 0),
       child: GestureDetector(
         onTap: (){
-          if(imageOne == null && imageTwo == null && imageThree == null){
+          if(imageUploaded == false){
             Fluttertoast.showToast(msg: 'Please upload atleast one image!', backgroundColor: Colors.black, textColor: Colors.white);
           }else{
             Navigator.push(
@@ -870,5 +888,46 @@ class _AddItemImagesState extends State<AddItemImages> {
         });
   }
 
+  showAlertDialog(BuildContext context) {
+
+    // set up the buttons
+    Widget cancelButton = FlatButton(
+      child: Text("Cancel",style: GoogleFonts.nunitoSans(),),
+      onPressed:  () {
+        Navigator.of(context).pop();
+        Navigator.of(context).pop();
+      },
+    );
+    Widget continueButton = FlatButton(
+      child: Text("Go back",style: GoogleFonts.nunitoSans(),),
+      onPressed:  () async {
+
+      },
+    );
+
+    // set up the AlertDialog
+    AlertDialog alert = AlertDialog(
+      title: Text("Step 2",
+        style: GoogleFonts.nunitoSans(
+          fontWeight: FontWeight.w500,
+        ),
+      ),
+      content: Text("Are you sure you want to go back before completing further steps?",
+        style: GoogleFonts.nunitoSans(),
+      ),
+      actions: [
+        cancelButton,
+        continueButton,
+      ],
+    );
+
+    // show the dialog
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return alert;
+      },
+    );
+  }
 
 }

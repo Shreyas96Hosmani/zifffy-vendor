@@ -8,11 +8,12 @@ var itemPrice;
 var image;
 var itemDescription;
 var itemCuisine;
+var itemCuisineId;
 var itemAmount;
 var itemType;
 var itemStatuses;
 var itemCategory;
-var itemBLSD;
+List<String> itemBLSD;
 
 var selectedItemIdForSearch;
 

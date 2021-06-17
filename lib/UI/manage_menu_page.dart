@@ -8,10 +8,16 @@ import 'package:vendor_dabbawala/UI/manage_item_images.dart';
 import 'data/manage_menu_data.dart' as manage;
 import 'data/login_data.dart' as login;
 import 'manage_subitems_page.dart';
+import 'data/login_data.dart' as login;
+import 'package:vendor_dabbawala/UI/data/add_new_item_data.dart' as add;
+import 'package:http/http.dart' as http;
+import 'package:vendor_dabbawala/UI/data/globals_data.dart' as globals;
+import 'dart:convert';
 
 class ManageMenuPage extends StatefulWidget {
   final itemId;
   final name;
+  final cuisineId;
   final cuisine;
   final amount;
   final price;
@@ -20,7 +26,7 @@ class ManageMenuPage extends StatefulWidget {
   final status;
   final category;
   final blsd;
-  ManageMenuPage(this.itemId, this.name, this.cuisine, this.amount, this.price, this.description, this.type, this.status, this.category, this.blsd) : super();
+  ManageMenuPage(this.itemId, this.name, this.cuisineId, this.cuisine, this.amount, this.price, this.description, this.type, this.status, this.category, this.blsd) : super();
   @override
   _ManageMenuPageState createState() => _ManageMenuPageState();
 }
@@ -28,6 +34,115 @@ class ManageMenuPage extends StatefulWidget {
 class _ManageMenuPageState extends State<ManageMenuPage> {
 
   int _value = 1;
+  bool _isloaded = false;
+
+
+  Future<String> getItemIdsByMasterId() async {
+
+    String url = globals.apiUrl + "getitemsbymasterid.php";
+
+    http.post(url, body: {
+
+      "masterID" : widget.itemId,
+
+    }).then((http.Response response) async {
+      final int statusCode = response.statusCode;
+
+      if (statusCode < 200 || statusCode > 400 || json == null) {
+        throw new Exception("Error fetching data");
+
+      }
+      var responseArrayGetItemsByMasterId = jsonDecode(response.body);
+      print(responseArrayGetItemsByMasterId);
+
+      var responseArrayGetItemsMsgByMasterId = responseArrayGetItemsByMasterId['message'].toString();
+      print(responseArrayGetItemsMsgByMasterId);
+
+      if(statusCode == 200){
+        if(responseArrayGetItemsMsgByMasterId == "Item Found"){
+          //prGetItems.hide();
+          setState(() {
+
+
+           var ItemTypeBLSDPresent = List.generate(responseArrayGetItemsByMasterId['data'].length, (index) => responseArrayGetItemsByMasterId['data'][index]['itemType']);
+
+            print("******111");
+            print(ItemTypeBLSDPresent.toList());
+            print(ItemTypeBLSDPresent.toList().length);
+            print(widget.cuisineId);
+            print("******");
+
+            List<String> tempTypes = ['Snacks', 'Lunch', 'Dinner'];
+            List<String> tempTypes2= ['Breakfast', 'Lunch', 'Dinner'];
+            List<String> tempTypes3 = ['Breakfast', 'Snacks', 'Dinner'];
+            List<String> tempTypes4 = ['Breakfast', 'Snacks', 'Lunch'];
+            List<String> tobeSed = [];
+
+
+            if(ItemTypeBLSDPresent.toList().length==1){
+              if(ItemTypeBLSDPresent.toList().contains("Breakfast")){
+                tobeSed = tempTypes;
+              }else if(ItemTypeBLSDPresent.toList().contains("Snacks")){
+                tobeSed = tempTypes2;
+              }else if(ItemTypeBLSDPresent.toList().contains("Lunch")){
+                tobeSed = tempTypes3;
+              }else{
+                tobeSed = tempTypes4;
+              }
+
+              for(int i=0;i<3;i++){
+                addNewItem(tobeSed[i]);
+              }
+
+            _isloaded = true;
+
+            }else{
+              _isloaded = true;
+            }
+          });
+
+
+        }else{
+          //prGetItems.hide();
+          setState(() {
+
+          });
+
+        }
+      }
+    });
+
+  }
+
+
+
+  Future<String> addNewItem(String itemType) async {
+
+    String url = globals.apiUrl + "addnewitem.php";
+
+    http.post(url, body: {
+
+      "vendorID": login.storedUserId.toString(),
+      "itemname" : widget.name,
+      "cuisineID": widget.cuisineId,
+      "itemtype": itemType,//selectedItemsTypes.toList().toString(),//selectedItemType.toString(),
+      "itemcategory": widget.type,
+      "itemamount": "50gms",//add.addNewItemAmountNumController.text.toString() + add.itemQuantity.toString(),
+      "itemprice": widget.price,
+      "itemdescription": widget.description,
+      "masterID": widget.itemId,
+      "itemstatus" : "0",
+    });
+
+  }
+
+
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    getItemIdsByMasterId();
+  }
 
   void _openEndDrawer() {
     login.scaffoldKey.currentState.openEndDrawer();
@@ -37,7 +152,11 @@ class _ManageMenuPageState extends State<ManageMenuPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+
+    final screenHeight = MediaQuery.of(context).size.height;
+    final screenWidth = MediaQuery.of(context).size.width;
+
+    return _isloaded==true?Scaffold(
       key:login.scaffoldKey,
       endDrawer: buildAppDrawer(context),
       backgroundColor: Colors.white,
@@ -56,6 +175,16 @@ class _ManageMenuPageState extends State<ManageMenuPage> {
           SizedBox(height: 20,),
           manage4(context),
         ],
+      ),
+    ):Container(
+      height: screenHeight,
+      color: Colors.white,
+      child: Center(
+        child: new CircularProgressIndicator(
+          strokeWidth: 1,
+          backgroundColor: Colors.white,
+          valueColor: AlwaysStoppedAnimation<Color>(Colors.blue),
+        ),
       ),
     );
   }

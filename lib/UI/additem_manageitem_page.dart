@@ -16,6 +16,7 @@ var itemPrice;
 var image;
 var itemDescription;
 var itemCuisine;
+var itemCuisineId;
 var itemAmount;
 var itemType;
 var itemStatuses;
@@ -71,6 +72,7 @@ class _AddItemManageItemPageState extends State<AddItemManageItemPage> {
             image = List.generate(responseArrayGetItems['data'].length, (index) => responseArrayGetItems['data'][index]['imageName']);
             itemDescription = List.generate(responseArrayGetItems['data'].length, (index) => responseArrayGetItems['data'][index]['itemDescription']);
             itemCuisine = List.generate(responseArrayGetItems['data'].length, (index) => responseArrayGetItems['data'][index]['cuisineName']);
+            itemCuisineId =  List.generate(responseArrayGetItems['data'].length, (index) => responseArrayGetItems['data'][index]['cuisineID']);
             itemType = List.generate(responseArrayGetItems['data'].length, (index) => responseArrayGetItems['data'][index]['itemCategory']);
             itemAmount = List.generate(responseArrayGetItems['data'].length, (index) => responseArrayGetItems['data'][index]['itemAmount']);
             itemStatuses = List.generate(responseArrayGetItems['data'].length, (index) => responseArrayGetItems['data'][index]['itemStatus'].toString());
@@ -839,7 +841,7 @@ class _AddItemManageItemPageState extends State<AddItemManageItemPage> {
                             Navigator.push(
                                 context,
                                 PageRouteBuilder(
-                                  pageBuilder: (c, a1, a2) =>ManageMenuPage(itemId[int.parse(selectedItemIdForSearch)],itemName[int.parse(selectedItemIdForSearch)],itemCuisine[int.parse(selectedItemIdForSearch)],itemAmount[int.parse(selectedItemIdForSearch)],itemPrice[int.parse(selectedItemIdForSearch)],itemDescription[int.parse(selectedItemIdForSearch)],itemType[int.parse(selectedItemIdForSearch)], itemStatuses[int.parse(selectedItemIdForSearch)],itemCategory[selectedItemIdForSearch], itemBLSD[selectedItemIdForSearch]),
+                                  pageBuilder: (c, a1, a2) =>ManageMenuPage(itemId[int.parse(selectedItemIdForSearch)],itemName[int.parse(selectedItemIdForSearch)],itemCuisineId[int.parse(selectedItemIdForSearch)], itemCuisine[int.parse(selectedItemIdForSearch)],itemAmount[int.parse(selectedItemIdForSearch)],itemPrice[int.parse(selectedItemIdForSearch)],itemDescription[int.parse(selectedItemIdForSearch)],itemType[int.parse(selectedItemIdForSearch)], itemStatuses[int.parse(selectedItemIdForSearch)],itemCategory[selectedItemIdForSearch], itemBLSD[selectedItemIdForSearch]),
                                   transitionsBuilder: (c, anim, a2, child) => FadeTransition(opacity: anim, child: child),
                                   transitionDuration: Duration(milliseconds: 300),
                                 )
@@ -959,7 +961,7 @@ class _AddItemManageItemPageState extends State<AddItemManageItemPage> {
                             Navigator.push(
                                 context,
                                 PageRouteBuilder(
-                                  pageBuilder: (c, a1, a2) =>ManageMenuPage(itemId[index],itemName[index],itemCuisine[index],itemAmount[index],itemPrice[index],itemDescription[index],itemType[index],itemStatuses[index],itemCategory[index],itemBLSD[index]),
+                                  pageBuilder: (c, a1, a2) =>ManageMenuPage(itemId[index],itemName[index],itemCuisineId[index], itemCuisine[index],itemAmount[index],itemPrice[index],itemDescription[index],itemType[index],itemStatuses[index],itemCategory[index],itemBLSD[index]),
                                   transitionsBuilder: (c, anim, a2, child) => FadeTransition(opacity: anim, child: child),
                                   transitionDuration: Duration(milliseconds: 300),
                                 )

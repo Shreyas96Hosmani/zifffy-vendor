@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:progress_dialog/progress_dialog.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:vendor_dabbawala/UI/view_my_order_details.dart';
 import 'data/login_data.dart' as login;
 import 'package:http/http.dart' as http;
@@ -37,11 +38,16 @@ var orderAditionalRequirement;
 var totalOrdersTillDate;
 var ordersMap = Map();
 var ordersMapA = Map();
+
+var ordersMapPending = Map();
+
 bool showOrders = false;
 
 var myOrderNumberIds;
 var myOrderNumbers;
+var myOrderNumbersPending;
 var myOrderNumbersDate;
+var myOrderNumbersSts;
 
 var myOrderAdOnNamess;
 
@@ -55,6 +61,10 @@ var myOrderTotal;
 var deliveryFees;
 var taxFees;
 var packingCharge;
+
+var myOrderAdsonItemTypee;
+
+var totOrdCount;
 
 class ViewMyOrderNumbers extends StatefulWidget {
   @override
@@ -115,7 +125,7 @@ class _ViewMyOrderNumbersState extends State<ViewMyOrderNumbers> {
             paymentType = List.generate(responseArrayGetOrders['data'].length, (index) => responseArrayGetOrders['data'][index]['orderPaymenttype'].toString());
             paymentStatus = List.generate(responseArrayGetOrders['data'].length, (index) => responseArrayGetOrders['data'][index]['orderPaymentStatus'].toString());
             orderAditionalRequirement = List.generate(responseArrayGetOrders['data'].length, (index) => responseArrayGetOrders['data'][index]['orderAdditionalinfo'].toString());
-            totalOrdersTillDate = orderNumbers.length;
+//            totalOrdersTillDate = orderNumbers.length;
 
             itemNames.forEach((element) {
               if(!ordersMap.containsKey(element)) {
@@ -173,6 +183,8 @@ class _ViewMyOrderNumbersState extends State<ViewMyOrderNumbers> {
 
   Future<String> getOrderNumbers(context) async {
 
+    ordersMapPending = Map();
+
     String url = globals.apiUrl + "getordernumbersbyvendorid.php";
 
     http.post(url, body: {
@@ -187,6 +199,8 @@ class _ViewMyOrderNumbersState extends State<ViewMyOrderNumbers> {
 
       }
 
+
+      SharedPreferences prefs = await SharedPreferences.getInstance();
       var responseArrayGetOrderNumbers = jsonDecode(response.body);
       print(responseArrayGetOrderNumbers);
 
@@ -200,6 +214,24 @@ class _ViewMyOrderNumbersState extends State<ViewMyOrderNumbers> {
             myOrderNumberIds = List.generate(responseArrayGetOrderNumbers['data'].length, (index) => responseArrayGetOrderNumbers['data'][index]['orderID'].toString());
             myOrderNumbers = List.generate(responseArrayGetOrderNumbers['data'].length, (index) => responseArrayGetOrderNumbers['data'][index]['orderNumber'].toString());
             myOrderNumbersDate = List.generate(responseArrayGetOrderNumbers['data'].length, (index) => responseArrayGetOrderNumbers['data'][index]['orderDatetime'].toString());
+            myOrderNumbersSts = List.generate(responseArrayGetOrderNumbers['data'].length, (index) => responseArrayGetOrderNumbers['data'][index]['orderStatus'].toString());
+
+
+            myOrderNumbersSts.forEach((element) {
+              if(!ordersMapPending.containsKey(element)) {
+                ordersMapPending[element] = 1;
+              } else {
+                ordersMapPending[element] +=1;
+              }
+            });
+
+            totOrdCount = myOrderNumbers.toList().length.toString();
+
+            prefs.setString('totalOrders',totOrdCount);
+
+            print("totOrdCount"+totOrdCount.toString());
+
+            totalOrdersTillDate = ordersMapPending['1'];
 
             deliveryFees = responseArrayGetOrderNumbers['data'][0]['orderDeliveryfee'].toString();
             taxFees = responseArrayGetOrderNumbers['data'][0]['orderTax'].toString();
@@ -208,8 +240,13 @@ class _ViewMyOrderNumbersState extends State<ViewMyOrderNumbers> {
             //myOrderTotal = responseArrayGetOrderNumbers['totalamt'].toString();
 
           });
+          
+          print("*******");
           print(myOrderNumbers);
           print(myOrderNumbersDate);
+          print(myOrderNumbersSts);
+          print(ordersMapPending);
+          print("*******");
 
           print("deliveryFees"+deliveryFees.toString());
           print("taxFees"+taxFees.toString());
@@ -231,7 +268,7 @@ class _ViewMyOrderNumbersState extends State<ViewMyOrderNumbers> {
 
     ordersMapA = Map();
 
-    String url = "https://test.dabbawala.ml/mobileapi/vendor/getadsonordersbyvendorid.php";
+    String url = globals.apiUrl + "getadsonordersbyvendorid.php";
 
     http.post(url, body: {
 
@@ -255,8 +292,9 @@ class _ViewMyOrderNumbersState extends State<ViewMyOrderNumbers> {
         if(responseArrayGetOrderAdOnsMsg == "Item Found"){
 
           setState(() {
-            myOrderAdOnNamess = List.generate(responseArrayGetOrderAdOns['data'].length, (index) => responseArrayGetOrderAdOns['data'][index]['itemadsonName'].toString());
+            myOrderAdOnNamess = List.generate(responseArrayGetOrderAdOns['data'].length, (index) => responseArrayGetOrderAdOns['data'][index]['itemadsonName'].toString() + " ("+responseArrayGetOrderAdOns['data'][index]['adsonorderItemtype'].toString().substring(0,1)+")");
             //myOrderAdOnPrices = List.generate(responseArrayGetOrderAdOns['data'].length, (index) => responseArrayGetOrderAdOns['data'][index]['itemadsonPrice'].toString());
+            myOrderAdsonItemTypee = List.generate(responseArrayGetOrderAdOns['data'].length, (index) => responseArrayGetOrderAdOns['data'][index]['adsonorderItemtype'].toString());
 
             myOrderAdOnNamess.forEach((element) {
               if(!ordersMapA.containsKey(element)) {
@@ -269,6 +307,7 @@ class _ViewMyOrderNumbersState extends State<ViewMyOrderNumbers> {
           });
           print(myOrderItemNames);
           print(myOrderAdOnNamess);
+          print(myOrderAdsonItemTypee);
           //print(myOrderItemPrices);
 
         }else{
@@ -284,6 +323,7 @@ class _ViewMyOrderNumbersState extends State<ViewMyOrderNumbers> {
 
   Future<String> getOrderSummary(context) async {
 
+    ordersMap = Map();
     print("order summary api called");
 
     String url = globals.apiUrl + "ordersummary.php";
@@ -310,20 +350,28 @@ class _ViewMyOrderNumbersState extends State<ViewMyOrderNumbers> {
         if(responseArrayGetOrdersSummaryMsg == "Successfully"){
 
           setState(() {
-            summaryItemNames = List.generate(responseArrayGetOrdersSummary['data'].length, (index) => responseArrayGetOrdersSummary['data'][index]['itemName'].toString());
+            summaryItemNames = List.generate(responseArrayGetOrdersSummary['data'].length, (index) => responseArrayGetOrdersSummary['data'][index]['itemName']+ " ("+responseArrayGetOrdersSummary['data'][index]['itemType'].toString().substring(0,1)+")"+ " : "+responseArrayGetOrdersSummary['data'][index]['neworderqnty'].toString());
             summaryItemQtys = List.generate(responseArrayGetOrdersSummary['data'].length, (index) => responseArrayGetOrdersSummary['data'][index]['neworderqnty'].toString());
+
+            summaryItemNames.forEach((element) {
+              if(!ordersMap.containsKey(element)) {
+                ordersMap[element] = 1;
+              } else {
+                ordersMap[element] +=1;
+              }
+            });
 
           });
 
           print("***************");
-          print(summaryItemNames);
+          print(ordersMap);
           print(summaryItemQtys);
           print("***************");
 
         }else{
 
           setState(() {
-            summaryItemNames = null;
+            summaryItemNames = [];
           });
 
         }
@@ -340,15 +388,15 @@ class _ViewMyOrderNumbersState extends State<ViewMyOrderNumbers> {
     orderNumbers = null;
     totalOrdersTillDate = null;
     showOrders = false;
+    summaryItemNames = [];
     //selectedOrderId = null;
-    getOrders(context);
     getOrderNumbers(context);
     getOrderAdons(context);
     itemNames = [];
     ordersMapA = Map();
     ordersMap = Map();
 
-    var elements = ["a", "b", "c", "d", "e", "a", "b", "c", "f", "g", "h", "h", "h", "e"];
+    var elements = ["h", "b", "c", "d", "e", "h", "b", "c", "f", "g", "h", "h", "h", "e"];
     var map = Map();
 
     elements.forEach((element) {
@@ -362,109 +410,153 @@ class _ViewMyOrderNumbersState extends State<ViewMyOrderNumbers> {
     print(map);
   }
 
+  Future<Null> refreshList() async {
+    refreshKey.currentState?.show(atTop: false);
+    getOrderNumbers(context);
+    getOrderAdons(context);
+    getOrderSummary(context);
+  }
+
+  var refreshKey = GlobalKey<RefreshIndicatorState>();
+
+  @override
+  void dispose() {
+    // TODO: implement dispose
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     prOrders2 = ProgressDialog(context);
+    //getOrderNumbers(context);
+    //getOrderAdons(context);
     return Scaffold(
       backgroundColor: Colors.white,
       appBar:buildAppBar(context),
-      body: SingleChildScrollView(
-        child: Stack(
-          children: [
-            Positioned(
-              top: 0, left: 0, right: 0,
-              child: Row(
+      body: RefreshIndicator(
+        key: refreshKey,
+        onRefresh: refreshList,
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                crossAxisAlignment: CrossAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Container(
-                    height: MediaQuery.of(context).size.height/3.2,
-                    width: MediaQuery.of(context).size.width/2.3,
-                    decoration: BoxDecoration(
-                      border: Border.all(color: Colors.black),
-                      borderRadius: BorderRadius.all(Radius.circular(5)),
-                    ),
-                    child: ListView.builder(
-                      itemCount: ordersMap.length,
-                      itemBuilder: (BuildContext context, int index) {
-                        String key = ordersMap.keys.elementAt(index);
-                        return new Column(
-                          children: <Widget>[
-                            Padding(
-                              padding: const EdgeInsets.only(top: 5, left: 10, right: 10),
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                crossAxisAlignment: CrossAxisAlignment.center,
-                                children: [
-                                  Flexible(
-                                    child: Text(summaryItemNames[index].toString(),
-                                      maxLines: 1,overflow: TextOverflow.ellipsis,
-                                      textScaleFactor: 1,
-                                      style: TextStyle(fontSize: 12),
-                                    ),
+                  Column(
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text("Items for today : ",
+                        style: TextStyle(fontWeight: FontWeight.bold,fontSize: 14),
+                      ),
+                      SizedBox(height: 10,),
+                      Container(
+                        height: 22 * double.parse(ordersMap.length.toString()),
+                        width: MediaQuery.of(context).size.width/2.3,
+//                    decoration: BoxDecoration(
+//                      border: Border.all(color: Colors.black),
+//                      borderRadius: BorderRadius.all(Radius.circular(5)),
+//                    ),
+                        child: ListView.builder(
+                          itemCount: ordersMap.length,
+                          itemBuilder: (BuildContext context, int index) {
+                            String key = ordersMap.keys.elementAt(index);
+                            return new Column(
+                              children: <Widget>[
+                                Padding(
+                                  padding: const EdgeInsets.only(top: 5, left: 0, right: 10),
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    crossAxisAlignment: CrossAxisAlignment.center,
+                                    children: [
+                                      Flexible(
+                                        child: Text("$key",//summaryItemNames[index]+" :".toString(),
+                                          maxLines: 1,overflow: TextOverflow.ellipsis,
+                                          textScaleFactor: 1,
+                                          style: TextStyle(fontSize: 12),
+                                        ),
+                                      ),
+//                                    Padding(
+//                                      padding: const EdgeInsets.only(left: 5),
+//                                      child: Text(summaryItemQtys[index].toString(),textScaleFactor: 1,),
+//                                    )
+                                    ],
                                   ),
-                                  Padding(
-                                    padding: const EdgeInsets.only(left: 5),
-                                    child: Text(summaryItemQtys[index].toString(),textScaleFactor: 1,),
-                                  )
-                                ],
-                              ),
-                            ), Divider(
-                              height: 2.0,
-                            ),
-                          ],
-                        );
-                      },
-                    ),
+                                ),
+                              ],
+                            );
+                          },
+                        ),
+                      ),
+                    ],
                   ),
-                  Container(
-                    height: MediaQuery.of(context).size.height/3.2,
-                    width: MediaQuery.of(context).size.width/2.3,
-                    decoration: BoxDecoration(
-                      border: Border.all(color: Colors.black),
-                      borderRadius: BorderRadius.all(Radius.circular(5)),
-                    ),
-                    child: ListView.builder(
-                      itemCount: ordersMapA.length,
-                      itemBuilder: (BuildContext context, int index) {
-                        String key = ordersMapA.keys.elementAt(index);
-                        return new Column(
-                          children: <Widget>[
-                            Padding(
-                              padding: const EdgeInsets.only(top: 5, left: 10, right: 10),
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                crossAxisAlignment: CrossAxisAlignment.center,
-                                children: [
-                                  Flexible(
-                                    child: Text("$key",
-                                      maxLines: 1,overflow: TextOverflow.ellipsis,
-                                      textScaleFactor: 1,
-                                      style: TextStyle(fontSize: 12),
-                                    ),
+                  Column(
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.only(left: 10),
+                        child: Text("Adons for today : ",
+                          style: TextStyle(fontWeight: FontWeight.bold,fontSize: 14),
+                        ),
+                      ),SizedBox(height: 10,),
+                      Container(
+                        height: 22 * double.parse(ordersMapA.length.toString()),
+                        width: MediaQuery.of(context).size.width/2.3,
+//                    decoration: BoxDecoration(
+//                      border: Border.all(color: Colors.black),
+//                      borderRadius: BorderRadius.all(Radius.circular(5)),
+//                    ),
+                        child: ListView.builder(
+                          itemCount: ordersMapA.length,
+                          itemBuilder: (BuildContext context, int index) {
+                            String key = ordersMapA.keys.elementAt(index);
+                            return new Column(
+                              children: <Widget>[
+                                Padding(
+                                  padding: const EdgeInsets.only(top: 5, left: 10, right: 0),
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    crossAxisAlignment: CrossAxisAlignment.center,
+                                    children: [
+                                      Flexible(
+                                        child: Text("$key :",
+                                          maxLines: 1,overflow: TextOverflow.ellipsis,
+                                          textScaleFactor: 1,
+                                          style: TextStyle(fontSize: 12),
+                                        ),
+                                      ),
+                                      Padding(
+                                        padding: const EdgeInsets.only(left: 5),
+                                        child: Text("${ordersMapA[key]}",textScaleFactor: 1,),
+                                      ),
+                                    ],
                                   ),
-                                  Padding(
-                                    padding: const EdgeInsets.only(left: 5),
-                                    child: Text("${ordersMapA[key]}",textScaleFactor: 1,),
-                                  )
-                                ],
-                              ),
-                            ), Divider(
-                              height: 2.0,
-                            ),
-                          ],
-                        );
-                      },
-                    ),
+                                ),
+                              ],
+                            );
+                          },
+                        ),
+                      ),
+                    ],
                   )
                 ],
               ),
-            ),
-            Padding(
-              padding: EdgeInsets.only(top: MediaQuery.of(context).size.height/3),
-              child: buildOrderNumbersListViewBuilder(context),
-            ),
-          ],
+              Divider(color: Colors.black,),
+              SizedBox(height: 10,),
+              Padding(
+                padding: const EdgeInsets.only(left: 20),
+                child: Text("Your Orders : ",
+                  style: TextStyle(fontWeight: FontWeight.bold,fontSize: 16),
+                ),
+              ),
+              SizedBox(height: 10,),
+              buildOrderNumbersListViewBuilder(context),
+            ],
+          ),
         ),
       ),
     );
@@ -479,36 +571,40 @@ class _ViewMyOrderNumbersState extends State<ViewMyOrderNumbers> {
             Navigator.of(context).pop();
           },
           child: Icon(Icons.arrow_back_outlined,color: Colors.black,)),
-      title: Text('No of Confirmed Orders Till Date:',textScaleFactor: 1,style: GoogleFonts.nunitoSans(
+      title: Text(totalOrdersTillDate == null ? 'No of Orders Till Date:   0' : 'No of Orders Till Date:   ' + totalOrdersTillDate.toString(),textScaleFactor: 1,style: GoogleFonts.nunitoSans(
         fontWeight: FontWeight.bold,
         fontSize: 16,
         color: Colors.blue[700],
       ),),
-      actions: [
-        Padding(
-          padding: const EdgeInsets.only(right: 40),
-          child: Center(
-            child: Text(totalOrdersTillDate == null ? "0" : totalOrdersTillDate.toString(),style: GoogleFonts.nunitoSans(
-                color: Colors.blue[700],
-                fontSize: 18,
-                fontWeight: FontWeight.bold
-            ),),
-          ),
-        )
-      ],
+//      actions: [
+//        Padding(
+//          padding: const EdgeInsets.only(right: 10),
+//          child: Center(
+//            child: Text(totalOrdersTillDate == null ? "0" : totalOrdersTillDate.toString(),style: GoogleFonts.nunitoSans(
+//                color: Colors.blue[700],
+//                fontSize: 18,
+//                fontWeight: FontWeight.bold
+//            ),),
+//          ),
+//        )
+//      ],
       centerTitle: true,
     );
   }
 
   Widget buildOrderNumbersListViewBuilder(BuildContext context){
+
+    //3- Cancelled 2- Complete 1- Pending ; OrderStatuses=[3, 3, 1, 3, 2] , total = 5? or total = 1?
+
     return Container(
-      height: MediaQuery.of(context).size.height,
+      height: MediaQuery.of(context).size.height,//50 * double.parse(myOrderNumbers.toList().length.toString()),
       child: Scrollbar(
         child: ListView.builder(
             shrinkWrap: true,
             scrollDirection: Axis.vertical,
+            physics: NeverScrollableScrollPhysics(),
             itemCount: myOrderNumbers == null ? 0 : myOrderNumbers.length,
-            itemBuilder: (context, index) => InkWell(
+            itemBuilder: (context, index) => myOrderNumbersSts[index].toString() == "2" || myOrderNumbersSts[index].toString() == "3" ? Container() : InkWell(
               onTap: (){
                 Navigator.push(
                     context,
@@ -518,20 +614,19 @@ class _ViewMyOrderNumbersState extends State<ViewMyOrderNumbers> {
                       transitionDuration: Duration(milliseconds: 300),
                     )
                 ).whenComplete((){
-                  getOrders(context);
                   getOrderNumbers(context);
                   getOrderAdons(context);
                 });
               },
               child: Padding(
-                padding: const EdgeInsets.only(left: 20, right: 20, bottom: 10),
+                padding: const EdgeInsets.only(left: 15, right: 15, bottom: 10),
                 child: Container(
                   width: MediaQuery.of(context).size.width,
                   //height: 50,
                   decoration: BoxDecoration(
                     //border: Border.all(color: Colors.black),
                     borderRadius: BorderRadius.all(Radius.circular(7)),
-                    //color: Colors.blue,
+                    color: Colors.blue[50],
                   ),
                   child: Padding(
                     padding: const EdgeInsets.only(top: 10, right: 10, bottom: 0, left: 10),
@@ -540,20 +635,64 @@ class _ViewMyOrderNumbersState extends State<ViewMyOrderNumbers> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         SizedBox(width: 10,),
-                        Text(myOrderNumbers[index].toString(),
-                          style: GoogleFonts.nunitoSans(
-                            fontSize: 16,
-                            color: Colors.black,
-                            fontWeight: FontWeight.bold,
-                          ),
+                        Row(
+                          children: [
+                            Text(myOrderNumbersDate[index].toString().substring(8,10) + " ",
+                              style: GoogleFonts.nunitoSans(
+                                fontSize: 16,
+                                color: Colors.black,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            Text(myOrderNumbersDate[index].toString().substring(5,7) == "01" ? "Jan" :
+                            myOrderNumbersDate[index].toString().substring(5,7) == "02" ? "Feb" :
+                            myOrderNumbersDate[index].toString().substring(5,7) == "03" ? "Mar" :
+                            myOrderNumbersDate[index].toString().substring(5,7) == "04" ? "Apr" :
+                            myOrderNumbersDate[index].toString().substring(5,7) == "05" ? "May" :
+                            myOrderNumbersDate[index].toString().substring(5,7) == "06" ? "Jun" :
+                            myOrderNumbersDate[index].toString().substring(5,7) == "07" ? "Jul" :
+                            myOrderNumbersDate[index].toString().substring(5,7) == "08" ? "Aug" :
+                            myOrderNumbersDate[index].toString().substring(5,7) == "09" ? "Sep" :
+                            myOrderNumbersDate[index].toString().substring(5,7) == "10" ? "Oct" :
+                            myOrderNumbersDate[index].toString().substring(5,7) == "11" ? "Nov"
+                              : "Dec",
+                              style: GoogleFonts.nunitoSans(
+                                fontSize: 16,
+                                color: Colors.black,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            Text(" "+myOrderNumbersDate[index].toString().substring(0,4),
+                              style: GoogleFonts.nunitoSans(
+                                fontSize: 16,
+                                color: Colors.black,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            Text(", "+myOrderNumbersDate[index].toString().substring(11,16),
+                              style: GoogleFonts.nunitoSans(
+                                fontSize: 16,
+                                color: Colors.black,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            Spacer(),
+                            Text("->  ",
+                              style: GoogleFonts.nunitoSans(
+                                fontSize: 16,
+                                color: Colors.black,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
                         ),
-                        Text(myOrderNumbersDate[index].toString(),
-                          style: GoogleFonts.nunitoSans(
-                            fontSize: 16,color: Colors.grey,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        Divider(),
+//                        Text(myOrderNumbersDate[index].toString(),
+//                          style: GoogleFonts.nunitoSans(
+//                            fontSize: 16,color: Colors.grey,
+//                            fontWeight: FontWeight.bold,
+//                          ),
+//                        ),
+                        Divider(color: Colors.transparent,),
                       ],
                     ),
                   ),

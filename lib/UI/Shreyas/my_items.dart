@@ -5,6 +5,8 @@ import 'package:vendor_dabbawala/UI/Shreyas/Widgets/VendorItems.dart';
 import 'package:vendor_dabbawala/UI/add_item_page.dart';
 
 class MyItems extends StatefulWidget {
+  String get routeName => '/myItems';
+
   @override
   _MyItemsState createState() => _MyItemsState();
 }
@@ -30,8 +32,9 @@ class _MyItemsState extends State<MyItems> {
     return Container(
       height: MediaQuery.of(context).size.height / 18,
       child: RaisedButton(
-        onPressed: () {
-          Navigator.pushReplacement(
+
+        onPressed: (){
+          Navigator.push(
               context,
               PageRouteBuilder(
                 pageBuilder: (c, a1, a2) => AddItemPage(),

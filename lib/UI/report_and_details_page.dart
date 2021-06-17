@@ -22,7 +22,7 @@ class _ReportAndDetailsPageState extends State<ReportAndDetailsPage> {
 
   Future<String> getReportDetails(context) async {
 
-    String url = "https://admin.dabbawala.ml/excelreports/salesreports.php";
+    String url = "https://test.dabbawala.ml/excelreports/salesreports.php";
 
     http.post(url, body: {
 
@@ -44,7 +44,7 @@ class _ReportAndDetailsPageState extends State<ReportAndDetailsPage> {
       if(msg == "Found"){
         prDownload.hide();
         setState(() {
-          salesDownloadReportUrl = "https://admin.dabbawala.ml/excelreports/"+responseArrayGetOrders['data'].toString();
+          salesDownloadReportUrl = "https://test.dabbawala.ml/excelreports/"+responseArrayGetOrders['data'].toString();
         });
         print(salesDownloadReportUrl);
         launch(salesDownloadReportUrl);
@@ -77,7 +77,7 @@ class _ReportAndDetailsPageState extends State<ReportAndDetailsPage> {
       body: Center(
         child: Container(
           width: MediaQuery.of(context).size.width/1.2,
-          height: MediaQuery.of(context).size.height/1.4,
+          height: MediaQuery.of(context).size.height/2.5,
           decoration: BoxDecoration(
               borderRadius: BorderRadius.all(Radius.circular(10)),
               border: Border.all(color: Colors.black.withOpacity(0.5))
@@ -86,12 +86,12 @@ class _ReportAndDetailsPageState extends State<ReportAndDetailsPage> {
             children: [
               SizedBox(height: 10,),
               buildSalesReport(context),
-              SizedBox(height: 20,),
+              SizedBox(height: 40,),
               buildDownloadReportContainer(context),
-              SizedBox(height: 30,),
-              buildSettlemetReport(context),
+              //SizedBox(height: 30,),
+              //buildSettlemetReport(context),
               SizedBox(height: 20,),
-              buildDownloadReportSettlementContainer(context),
+              //buildDownloadReportSettlementContainer(context),
             ],
           ),
         ),

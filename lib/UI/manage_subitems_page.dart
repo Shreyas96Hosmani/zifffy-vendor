@@ -37,7 +37,7 @@ class _ManageSubItemsState extends State<ManageSubItems> {
 
   Future<String> getSubItemList(context) async {
 
-    String url = "https://test.dabbawala.ml/mobileapi/user/getsubitembyitemid.php";
+    String url = "https://testold.dabbawala.ml/mobileapi/user/getsubitembyitemid.php";
 
     http.post(url, body: {
 
@@ -179,6 +179,7 @@ class _ManageSubItemsState extends State<ManageSubItems> {
   void initState() {
     // TODO: implement initState
     super.initState();
+    subItemNamesList = null;
     selectedSubItemIdForDelete = null;
     getSubItemList(context);
   }
@@ -215,6 +216,33 @@ class _ManageSubItemsState extends State<ManageSubItems> {
                       textAlign: TextAlign.center,
                       style: GoogleFonts.nunitoSans(
                         color: Colors.red,
+                      ),
+                    ),
+                  ),
+                ),
+                SizedBox(height: 20,),
+                Padding(
+                  padding: const EdgeInsets.only(left: 10, right: 10),
+                  child: GestureDetector(
+                    onTap: (){
+                      print(subItemPriceController.text.toString()+selectedQnty.toString());
+                      if(formKey.currentState.validate()){
+                        prSubItem.show();
+                        addSubItem(context);
+                      }
+                    },
+                    child: Container(
+                      height: MediaQuery.of(context).size.height/15,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.all(Radius.circular(10)),
+                        color: Colors.blue[700],
+                      ),
+                      child: Center(
+                        child: Text('Save Sub Item',style: GoogleFonts.nunitoSans(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 20,
+                            color: Colors.white
+                        ),),
                       ),
                     ),
                   ),
@@ -618,66 +646,34 @@ class _ManageSubItemsState extends State<ManageSubItems> {
   Widget buildSaveCancelButton(BuildContext context){
     return Padding(
       padding: const EdgeInsets.only(left: 0,right: 0),
-      child: Row(
-        children: [
-          Flexible(
-            child: GestureDetector(
-              onTap: (){
-                print(subItemPriceController.text.toString()+selectedQnty.toString());
-                if(formKey.currentState.validate()){
-                  prSubItem.show();
-                  addSubItem(context);
-                }
-              },
-              child: Container(
-                height: MediaQuery.of(context).size.height/15,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.all(Radius.circular(10)),
-                  color: Colors.blue[700],
-                ),
-                child: Center(
-                  child: Text('Save Sub Item',style: GoogleFonts.nunitoSans(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 20,
-                      color: Colors.white
-                  ),),
-                ),
-              ),
-            ),
+      child: GestureDetector(
+        onTap: (){
+          Navigator.push(
+              context,
+              PageRouteBuilder(
+                pageBuilder: (c, a1, a2) =>AddAdonsPage(widget.id.toString()),
+                transitionsBuilder: (c, anim, a2, child) => FadeTransition(opacity: anim, child: child),
+                transitionDuration: Duration(milliseconds: 300),
+              )
+          );
+        },
+        child: Container(
+          width: MediaQuery.of(context).size.width/1.1,
+          height: MediaQuery.of(context).size.height/15,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.all(Radius.circular(10)),
+            color: Colors.blue[700],
           ),
-          SizedBox(width: 20,),
-          Flexible(
-            child: GestureDetector(
-              onTap: (){
-                Navigator.push(
-                    context,
-                    PageRouteBuilder(
-                      pageBuilder: (c, a1, a2) =>AddAdonsPage(widget.id.toString()),
-                      transitionsBuilder: (c, anim, a2, child) => FadeTransition(opacity: anim, child: child),
-                      transitionDuration: Duration(milliseconds: 300),
-                    )
-                );
-              },
-              child: Container(
-                width: MediaQuery.of(context).size.width/2.2,
-                height: MediaQuery.of(context).size.height/15,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.all(Radius.circular(10)),
-                  color: Colors.blue[700],
-                ),
-                child: Center(
-                  child: Text('Next ->\nAdd Add Ons',
-                    textAlign: TextAlign.center,
-                    style: GoogleFonts.nunitoSans(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                      color: Colors.white
-                  ),),
-                ),
-              ),
-            ),
+          child: Center(
+            child: Text('Next  ->  Add Add Ons',
+              textAlign: TextAlign.center,
+              style: GoogleFonts.nunitoSans(
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+                color: Colors.white
+            ),),
           ),
-        ],
+        ),
       ),
     );
   }
