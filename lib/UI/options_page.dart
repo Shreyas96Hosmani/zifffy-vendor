@@ -1,9 +1,12 @@
 import 'dart:io';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:package_info/package_info.dart';
 import 'package:progress_dialog/progress_dialog.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:vendor_dabbawala/UI/NotificationScreen.dart';
 import 'package:vendor_dabbawala/UI/Shreyas/my_items.dart';
 import 'package:vendor_dabbawala/UI/data/login_data.dart';
@@ -34,9 +37,77 @@ class OptionsPage extends StatefulWidget {
 
 class _OptionsPageState extends State<OptionsPage> {
 
+ bool _isloaded = false;
+ String support_email, app_store_url, play_store_url;
+
   AddNewItemApiProvider addNewItemApiProvider = AddNewItemApiProvider();
 
-  Future<String> getNotifications2(context) async {
+
+
+  //GET app data
+  Future CheckForUpdate() async {
+
+
+    final PackageInfo info = await PackageInfo.fromPlatform();
+    var response;
+
+    try {
+      response = await http.post(globals.apiUrl+"getappmasterdata.php", body: {});
+      print("response" + response.body.toString());
+      if (response.statusCode == 200) {
+
+        var responseArray = jsonDecode(response.body);
+        var responseArrayMsg =
+        responseArray['message'].toString();
+        if (responseArrayMsg == "Master Data Found") {
+
+          double currentVersion =
+          double.parse(info.version.trim().replaceAll(".", ""));
+          print('currentVersion' + currentVersion.toString());
+
+          String tempversion = Platform.isAndroid
+              ? responseArray['data']['android_min_version']
+              : responseArray['data']['ios_min_version'];
+
+          double newVersion = double.parse(tempversion.trim().replaceAll(".", ""));
+
+          print('newVersion' + newVersion.toString());
+          if (newVersion > currentVersion) {
+
+
+            setState(() {
+              _isloaded = false;
+            });
+
+            _showVersionDialog(context, tempversion, responseArray['data']['support_email'], responseArray['data']['app_store_url'],
+                responseArray['data']['play_store_url']);
+          } else {
+
+            setState(() {
+              _isloaded = true;
+            });
+            storedTotalNotifications = null;
+            totalNotificationCount2 = null;
+            displayNotificationCount = null;
+            getNotifications2();
+            getOrderNumbers();
+
+
+          }
+        }
+
+      } else {
+        throw Exception("Unable to perform request!");
+      }
+    } catch (Exception) {
+      print("exception" + Exception.toString());
+    }
+
+
+  }
+
+
+  Future<String> getNotifications2() async {
 
     String url = globals.apiUrl + "getcustomnotify.php";
 
@@ -152,7 +223,7 @@ class _OptionsPageState extends State<OptionsPage> {
     });
   }
 
-  Future<String> getOrderNumbers(context) async {
+  Future<String> getOrderNumbers() async {
 
     String url = globals.apiUrl + "getordernumbersbyvendorid.php";
 
@@ -226,11 +297,8 @@ class _OptionsPageState extends State<OptionsPage> {
   void initState() {
     // TODO: implement initState
     super.initState();
-    storedTotalNotifications = null;
-    totalNotificationCount2 = null;
-    displayNotificationCount = null;
-    getNotifications2(context);
-    getOrderNumbers(context);
+
+    CheckForUpdate();
   }
 
   @override
@@ -271,7 +339,7 @@ class _OptionsPageState extends State<OptionsPage> {
               )
 
           ),
-      child: Scaffold(
+      child: _isloaded==true? Scaffold(
         //key: _scaffoldKey,
         appBar: AppBar(
           backgroundColor: Colors.white,
@@ -294,7 +362,7 @@ class _OptionsPageState extends State<OptionsPage> {
                           transitionDuration: Duration(milliseconds: 300),
                         )
                     ).whenComplete((){
-                      getNotifications2(context);
+                      getNotifications2();
                     });
                   }),
                 ),
@@ -317,7 +385,17 @@ class _OptionsPageState extends State<OptionsPage> {
         ),
         backgroundColor: Colors.white,
         body: Center(child: buildOptionsContainer(context)),
+      ):Container(
+      height: 200,
+      color: Colors.white,
+      child: Center(
+        child: new CircularProgressIndicator(
+          strokeWidth: 1,
+          backgroundColor: Colors.white,
+          valueColor: AlwaysStoppedAnimation<Color>(Colors.blue),
+        ),
       ),
+    ),
     );
   }
 
@@ -374,7 +452,7 @@ class _OptionsPageState extends State<OptionsPage> {
               transitionDuration: Duration(milliseconds: 300),
             )
         ).whenComplete((){
-          getOrderNumbers(context);
+          getOrderNumbers();
         });
       },
       child: Container(
@@ -410,7 +488,7 @@ class _OptionsPageState extends State<OptionsPage> {
               transitionDuration: Duration(milliseconds: 300),
             )
         ).whenComplete((){
-          getOrderNumbers(context);
+          getOrderNumbers();
         });
 
       },
@@ -447,7 +525,7 @@ class _OptionsPageState extends State<OptionsPage> {
               transitionDuration: Duration(milliseconds: 300),
             )
         ).whenComplete((){
-          getOrderNumbers(context);
+          getOrderNumbers();
         });
       },
       child: Container(
@@ -510,5 +588,53 @@ class _OptionsPageState extends State<OptionsPage> {
       },
     );
   }
+
+ _showVersionDialog(context, String version, String support_email,
+     String app_store_url, String play_store_url) async {
+   print(play_store_url);
+   print(play_store_url);
+   print(play_store_url);
+
+   await showDialog<String>(
+     context: context,
+     barrierDismissible: false,
+     builder: (BuildContext context) {
+       String title = 'New Update Available';
+       String message = "Version " +
+           version +
+           " is required\n(Clear play/App store applications cache, if you see older version)";
+       String btnLabel = 'Update Now';
+       return Platform.isIOS
+           ? new CupertinoAlertDialog(
+         title: Text(title),
+         content: Text(message),
+         actions: <Widget>[
+           FlatButton(
+             child: Text(btnLabel),
+             onPressed: () => _launchURL(app_store_url),
+           ),
+         ],
+       )
+           : new AlertDialog(
+         title: Text(title),
+         content: Text(message),
+         actions: <Widget>[
+           FlatButton(
+             child: Text(btnLabel),
+             onPressed: () => _launchURL(play_store_url),
+           ),
+         ],
+       );
+     },
+   );
+ }
+
+ _launchURL(String url) async {
+   if (await canLaunch(url)) {
+     await launch(url);
+   } else {
+     throw 'Could not launch $url';
+   }
+ }
 
 }
